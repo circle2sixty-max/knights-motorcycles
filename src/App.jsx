@@ -16,7 +16,17 @@ import {
   Truck,
   Wallet,
   Wrench,
+  Menu,
+  X,
+  ChevronDown,
+  CheckCircle2,
+  Heart,
+  Zap,
+  Award,
+  Users,
+  Package,
 } from 'lucide-react'
+import { useState } from 'react'
 
 const company = {
   name: 'Knights Motorcycles',
@@ -24,16 +34,23 @@ const company = {
   phoneHref: 'tel:07766599955',
   address: 'Unit A4, Sunshine Mills, Wortley Road, Armley, Leeds, LS12 3HT, United Kingdom',
   subtitle: 'Quality Used Motorcycles in Leeds',
-  strapline:
-    'HPI checked. Warranty included. Nationwide delivery. Part exchange welcome.',
+  strapline: 'HPI checked. Warranty included. Nationwide delivery. Part exchange welcome.',
+  slogan: 'Ride with Confidence',
+  philosophy: 'Every motorcycle tells a story. We make sure yours starts right.',
   hours: 'Viewing by appointment · Mon–Sat, 9:00 AM – 5:00 PM',
   inquiry: '24/7 enquiry support by phone or text',
+  stats: {
+    bikesSold: '1000+',
+    satisfaction: '98%',
+    warranty: '30 Days',
+    experience: '10+ Years',
+  },
 }
 
 const bikes = [
   {
     slug: '2022-ktm-duke-125-7k',
-    title: '2022 KTM Duke 125 7k',
+    title: '2022 KTM Duke 125',
     make: 'KTM',
     model: 'Duke 125',
     year: 2022,
@@ -42,14 +59,13 @@ const bikes = [
     style: 'Sport',
     price: 2950,
     image: '/images/bike-2.webp',
-    badge: 'Finance Available',
+    badge: 'Finance',
     status: 'Available',
-    description:
-      'A clean, learner-friendly KTM with sharp styling, light handling, and the right balance of confidence and fun for city riding or first-bike ownership.',
+    description: 'Clean, learner-friendly KTM with sharp styling and light handling.',
   },
   {
     slug: '2017-honda-cbr650f-low-mileage',
-    title: '2017 Honda CBR650F Low Mileage',
+    title: '2017 Honda CBR650F',
     make: 'Honda',
     model: 'CBR650F',
     year: 2017,
@@ -58,14 +74,13 @@ const bikes = [
     style: 'Sport',
     price: 3600,
     image: '/images/bike-3.webp',
-    badge: 'New Arrival',
+    badge: 'New',
     status: 'Available',
-    description:
-      'A strong-value middleweight sport bike with everyday usability, refined Honda manners, and enough performance for step-up riders.',
+    description: 'Strong-value middleweight sport bike with everyday usability.',
   },
   {
     slug: '2017-yamaha-mt125-low-mileage',
-    title: '2017 Yamaha MT125 Low Mileage',
+    title: '2017 Yamaha MT125',
     make: 'Yamaha',
     model: 'MT125',
     year: 2017,
@@ -76,8 +91,7 @@ const bikes = [
     image: '/images/bike-4.webp',
     badge: 'Popular',
     status: 'Available',
-    description:
-      'One of the best entry-level naked bikes in the UK market, ideal for urban commuting with premium styling and proven Yamaha reliability.',
+    description: 'Best entry-level naked bike, ideal for urban commuting.',
   },
   {
     slug: '2017-yamaha-yzf-r125-abs',
@@ -92,12 +106,11 @@ const bikes = [
     image: '/images/bike-5.webp',
     badge: 'ABS',
     status: 'Available',
-    description:
-      'A sharp-looking, high-demand 125cc sports bike with strong learner appeal and the visual presence of a larger displacement machine.',
+    description: 'Sharp-looking 125cc sports bike with strong learner appeal.',
   },
   {
     slug: '2018-ktm-duke-125-low-mileage',
-    title: '2018 KTM Duke 125 Low Mileage',
+    title: '2018 KTM Duke 125',
     make: 'KTM',
     model: 'Duke 125',
     year: 2018,
@@ -106,14 +119,13 @@ const bikes = [
     style: 'Naked',
     price: 2800,
     image: '/images/bike-6.webp',
-    badge: 'Low Mileage',
+    badge: 'Low Miles',
     status: 'Available',
-    description:
-      'A very low-mileage example with excellent first-bike appeal, sporty styling, and a great balance of affordability and brand desirability.',
+    description: 'Very low-mileage example with excellent first-bike appeal.',
   },
   {
     slug: '2022-yamaha-xsr-125-abs-6k',
-    title: '2022 Yamaha XSR 125 ABS 6k',
+    title: '2022 Yamaha XSR 125 ABS',
     make: 'Yamaha',
     model: 'XSR 125 ABS',
     year: 2022,
@@ -122,175 +134,62 @@ const bikes = [
     style: 'Retro',
     price: 3500,
     image: 'https://i.ebayimg.com/images/g/npsAAeSwPHBoeDGQ/s-l1600.webp',
-    badge: 'Retro Style',
+    badge: 'Retro',
     status: 'Available',
-    description:
-      'A stylish retro-inspired 125 with modern Yamaha engineering, ABS braking, and strong appeal for urban and lifestyle riders.',
-  },
-  {
-    slug: '2021-yamaha-mt125-low-mileage',
-    title: '2021 Yamaha MT125 Low Mileage',
-    make: 'Yamaha',
-    model: 'MT125',
-    year: 2021,
-    mileage: 6800,
-    engine: '125cc',
-    style: 'Naked',
-    price: 3500,
-    image: 'https://i.ebayimg.com/images/g/BlQAAOSwtVBoQBS6/s-l1600.webp',
-    badge: 'Learner Favourite',
-    status: 'Available',
-    description:
-      'A later-generation MT125 with sharp design, strong commuter practicality, and excellent demand in the UK learner market.',
-  },
-  {
-    slug: '2021-yamaha-yzf-r125-low-mileage',
-    title: '2021 Yamaha YZF R125 Low Mileage',
-    make: 'Yamaha',
-    model: 'YZF R125',
-    year: 2021,
-    mileage: 6800,
-    engine: '125cc',
-    style: 'Sport',
-    price: 3500,
-    image: 'https://i.ebayimg.com/images/g/UbwAAeSwSIRpINC4/s-l1600.webp',
-    badge: 'Low Mileage',
-    status: 'Available',
-    description:
-      'A high-demand sport 125 that combines premium looks, everyday usability, and strong resale appeal.',
-  },
-  {
-    slug: '2019-yamaha-mt125-abs',
-    title: '2019 Yamaha MT125 ABS',
-    make: 'Yamaha',
-    model: 'MT125 ABS',
-    year: 2019,
-    mileage: 11200,
-    engine: '125cc',
-    style: 'Naked',
-    price: 2800,
-    image: 'https://i.ebayimg.com/images/g/ytQAAeSwEP1o-AO8/s-l1600.webp',
-    badge: 'Sold',
-    status: 'Sold',
-    description:
-      'A good example of the kind of fast-moving, value-led 125cc stock that performs well in the current market.',
-  },
-  {
-    slug: '2020-yamaha-r3-abs-low-mileage',
-    title: '2020 Yamaha R3 ABS Low Mileage',
-    make: 'Yamaha',
-    model: 'R3 ABS',
-    year: 2020,
-    mileage: 2450,
-    engine: '321cc',
-    style: 'Sport',
-    price: 3600,
-    image: 'https://i.ebayimg.com/images/g/lmIAAeSwPHZpfpBp/s-l1600.webp',
-    badge: 'Sold',
-    status: 'Sold',
-    description:
-      'A strong step-up sports bike for riders moving beyond 125cc, with low mileage and broad market appeal.',
-  },
-  {
-    slug: '2010-honda-xl700-transalp',
-    title: '2010 Honda XL700 Transalp',
-    make: 'Honda',
-    model: 'XL700 Transalp',
-    year: 2010,
-    mileage: 14000,
-    engine: '700cc',
-    style: 'Adventure',
-    price: 3600,
-    image: '/images/bike-1.webp',
-    badge: 'Adventure',
-    status: 'Available',
-    description:
-      'A practical, proven adventure machine with broad all-round capability and strong touring credentials.',
+    description: 'Stylish retro-inspired 125 with modern engineering and ABS.',
   },
 ]
 
 const trustBadges = [
-  'HPI Checked',
-  '30-Day Warranty',
-  'Minimum 6 Months MOT',
-  'Nationwide Delivery',
-  'No Hidden Fees',
+  { icon: ShieldCheck, label: 'HPI Checked', desc: 'Full history verified' },
+  { icon: Award, label: '30-Day Warranty', desc: 'Peace of mind included' },
+  { icon: CheckCircle2, label: 'MOT Ready', desc: 'Minimum 6 months MOT' },
+  { icon: Truck, label: 'UK Delivery', desc: 'Nationwide shipping' },
+  { icon: Users, label: 'Part Exchange', desc: 'Fair valuations' },
+  { icon: Heart, label: 'No Hidden Fees', desc: 'Transparent pricing' },
+]
+
+const services = [
+  {
+    icon: Bike,
+    title: 'Buy a Bike',
+    desc: 'Browse our curated selection of quality used motorcycles.',
+    link: '/bikes',
+    color: 'from-amber-500/20 to-orange-600/20',
+  },
+  {
+    icon: Wallet,
+    title: 'Sell Your Bike',
+    desc: 'Get an instant valuation or part exchange offer.',
+    link: '/sell-your-bike',
+    color: 'from-emerald-500/20 to-teal-600/20',
+  },
+  {
+    icon: CreditCard,
+    title: 'Finance',
+    desc: 'Flexible payment options from £79/month.',
+    link: '/finance',
+    color: 'from-blue-500/20 to-indigo-600/20',
+  },
+  {
+    icon: Wrench,
+    title: 'Our Promise',
+    desc: 'Pre-delivery inspection & preparation standards.',
+    link: '/about',
+    color: 'from-purple-500/20 to-pink-600/20',
+  },
 ]
 
 const prepItems = [
-  'Oil change completed before delivery',
-  'Brake fluid checked and topped up where required',
-  'Coolant level checked and corrected as needed',
-  'Tyres inspected for tread, pressure, and overall condition',
-  'Chain and sprockets checked for wear and tension',
-  'Lights, indicators, horn, and dash functions tested',
+  'Complete oil change with appropriate grade',
+  'Brake fluid check and top-up (DOT4)',
+  'Coolant system inspection and top-up',
+  'Tyre tread, pressure, and condition check',
+  'Chain and sprocket assessment',
+  'All electrical systems tested',
+  'Throttle and idle verification',
+  'Safety inspection of all components',
 ]
-
-const financeHighlights = [
-  {
-    title: 'Clear monthly affordability',
-    copy: 'We present realistic monthly examples to help buyers judge affordability before making an enquiry.',
-    icon: Wallet,
-  },
-  {
-    title: 'Flexible finance routes',
-    copy: 'The site is designed to support HP-first finance and can later be expanded to PCP if the business chooses.',
-    icon: CreditCard,
-  },
-  {
-    title: 'Conversion-focused placement',
-    copy: 'Finance appears on the homepage, inventory cards, and each bike detail page instead of being buried.',
-    icon: CircleDollarSign,
-  },
-]
-
-const reviews = [
-  {
-    name: 'Leeds commuter buyer',
-    quote:
-      'Professional, straightforward, and no pressure. The bike was exactly as described and ready to ride.',
-  },
-  {
-    name: 'First-bike customer',
-    quote:
-      'Clear communication, helpful appointment process, and a much more reassuring buying experience than dealing privately.',
-  },
-  {
-    name: 'Part-exchange customer',
-    quote:
-      'A fair offer and an easy process. The new site structure makes the service feel much more premium and trustworthy.',
-  },
-]
-
-const legalPageCopy = {
-  privacy: {
-    title: 'Privacy Policy',
-    sections: [
-      ['Who we are', `${company.name} collects enquiry, appointment, valuation, and finance lead information through this website.`],
-      ['What we collect', 'We may collect your name, phone number, email, registration number, mileage, bike condition details, and any message you send us.'],
-      ['Why we collect it', 'We use this information to respond to enquiries, prepare valuations, arrange appointments, discuss finance options, and support legitimate sales activity.'],
-      ['Data retention', 'Lead information should only be retained for as long as necessary for customer service, sales follow-up, legal compliance, and record keeping.'],
-    ],
-  },
-  cookies: {
-    title: 'Cookie Policy',
-    sections: [
-      ['Essential cookies', 'These support core website functions such as navigation, session continuity, and performance.'],
-      ['Analytics cookies', 'Analytics may be used to understand how visitors interact with the site and to improve page performance and conversion flow.'],
-      ['Marketing cookies', 'If used in future, marketing cookies should only be enabled with appropriate consent.'],
-      ['Cookie control', 'Visitors should be able to manage or withdraw consent through the cookie banner or browser settings.'],
-    ],
-  },
-  terms: {
-    title: 'Terms & Conditions',
-    sections: [
-      ['Website information', 'Stock, prices, and finance examples are displayed in good faith but remain subject to availability, verification, and change.'],
-      ['Reservations', 'Reservation deposits, if enabled, secure a bike for a defined period and remain subject to the specific reservation terms shown during checkout.'],
-      ['Descriptions', 'Vehicle descriptions and imagery are intended as guides and should be confirmed during viewing, inspection, or direct contact.'],
-      ['Appointments', 'Viewings are appointment-based to ensure the best customer experience and vehicle availability.'],
-    ],
-  },
-}
 
 function formatPrice(value) {
   return new Intl.NumberFormat('en-GB', {
@@ -318,12 +217,14 @@ function App() {
       <div className="min-h-screen bg-[#0a0d12] text-white">
         <SiteShell>
           <Routes>
-            <Route path="/" element={<HomePage />} />
+            <Route path="/" element={<SplashPage />} />
+            <Route path="/home" element={<HomePage />} />
             <Route path="/bikes" element={<InventoryPage />} />
             <Route path="/bikes/:slug" element={<BikeDetailPage />} />
             <Route path="/sell-your-bike" element={<SellPage />} />
             <Route path="/finance" element={<FinancePage />} />
             <Route path="/contact" element={<ContactPage />} />
+            <Route path="/about" element={<AboutPage />} />
             <Route path="/legal/:type" element={<LegalPage />} />
           </Routes>
         </SiteShell>
@@ -333,63 +234,111 @@ function App() {
 }
 
 function SiteShell({ children }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0a0d12]/90 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-4 py-4 sm:px-6 lg:px-8">
-          <div>
-            <Link to="/" className="text-lg font-semibold tracking-[0.2em] text-white uppercase">
-              Knights Motorcycles
-            </Link>
-            <p className="mt-1 text-xs text-white/55">Leeds · Used bikes · Appointment only</p>
-          </div>
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0a0d12]/95 backdrop-blur-md">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+          <Link to="/" className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-600">
+              <Bike className="h-6 w-6 text-white" />
+            </div>
+            <div className="hidden sm:block">
+              <div className="text-base font-bold tracking-wide text-white">{company.name}</div>
+              <div className="text-xs text-white/50">Leeds · Used Motorcycles</div>
+            </div>
+          </Link>
 
-          <nav className="hidden items-center gap-5 text-sm text-white/75 md:flex">
-            <NavItem to="/">Home</NavItem>
-            <NavItem to="/bikes">Used Bikes</NavItem>
-            <NavItem to="/sell-your-bike">Sell Your Bike</NavItem>
+          <nav className="hidden items-center gap-1 text-sm text-white/75 md:flex">
+            <NavItem to="/home">Home</NavItem>
+            <NavItem to="/bikes">Bikes</NavItem>
+            <NavItem to="/sell-your-bike">Sell</NavItem>
             <NavItem to="/finance">Finance</NavItem>
+            <NavItem to="/about">About</NavItem>
             <NavItem to="/contact">Contact</NavItem>
           </nav>
 
-          <a
-            href={company.phoneHref}
-            className="inline-flex items-center gap-2 rounded-full border border-amber-400/40 bg-amber-400/10 px-4 py-2 text-sm font-medium text-amber-200 transition hover:bg-amber-400 hover:text-black"
-          >
-            <Phone className="h-4 w-4" />
-            Call Now
-          </a>
+          <div className="flex items-center gap-2">
+            <a
+              href={company.phoneHref}
+              className="hidden items-center gap-2 rounded-full bg-amber-500 px-4 py-2 text-sm font-semibold text-black transition hover:bg-amber-400 sm:inline-flex"
+            >
+              <Phone className="h-4 w-4" />
+              <span className="hidden lg:inline">{company.phone}</span>
+            </a>
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 md:hidden"
+            >
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          </div>
         </div>
+
+        {mobileMenuOpen && (
+          <div className="border-t border-white/10 bg-[#0a0d12]/95 px-4 py-4 md:hidden">
+            <nav className="flex flex-col gap-2">
+              <MobileNavItem to="/home" onClick={() => setMobileMenuOpen(false)}>Home</MobileNavItem>
+              <MobileNavItem to="/bikes" onClick={() => setMobileMenuOpen(false)}>Used Bikes</MobileNavItem>
+              <MobileNavItem to="/sell-your-bike" onClick={() => setMobileMenuOpen(false)}>Sell Your Bike</MobileNavItem>
+              <MobileNavItem to="/finance" onClick={() => setMobileMenuOpen(false)}>Finance</MobileNavItem>
+              <MobileNavItem to="/about" onClick={() => setMobileMenuOpen(false)}>About Us</MobileNavItem>
+              <MobileNavItem to="/contact" onClick={() => setMobileMenuOpen(false)}>Contact</MobileNavItem>
+            </nav>
+            <a
+              href={company.phoneHref}
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-amber-500 py-3 text-sm font-semibold text-black"
+            >
+              <Phone className="h-4 w-4" />
+              {company.phone}
+            </a>
+          </div>
+        )}
       </header>
 
       {children}
 
-      <footer className="border-t border-white/10 bg-black/40">
-        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:px-6 lg:grid-cols-[1.4fr_1fr_1fr] lg:px-8">
-          <div>
-            <h3 className="text-lg font-semibold">{company.name}</h3>
-            <p className="mt-3 max-w-xl text-sm leading-7 text-white/65">
-              A reimagined dealership website concept built from the original public site content,
-              upgraded around clearer trust, stronger conversion paths, and a more premium buying
-              journey.
-            </p>
-          </div>
-          <div>
-            <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-white/70">Quick links</h4>
-            <div className="mt-4 flex flex-col gap-3 text-sm text-white/65">
-              <Link to="/bikes" className="hover:text-white">Used Bikes</Link>
-              <Link to="/sell-your-bike" className="hover:text-white">Sell Your Bike</Link>
-              <Link to="/finance" className="hover:text-white">Finance</Link>
-              <Link to="/contact" className="hover:text-white">Contact</Link>
+      <footer className="border-t border-white/10 bg-black/50">
+        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <Bike className="h-6 w-6 text-amber-500" />
+                <span className="font-bold">{company.name}</span>
+              </div>
+              <p className="mt-3 text-sm leading-relaxed text-white/60">
+                {company.philosophy}
+              </p>
+            </div>
+            <div>
+              <h4 className="font-semibold text-white/90">Quick Links</h4>
+              <div className="mt-4 flex flex-col gap-2 text-sm text-white/60">
+                <Link to="/bikes" className="hover:text-amber-400">Browse Bikes</Link>
+                <Link to="/sell-your-bike" className="hover:text-amber-400">Sell Your Bike</Link>
+                <Link to="/finance" className="hover:text-amber-400">Finance Options</Link>
+                <Link to="/about" className="hover:text-amber-400">Why Choose Us</Link>
+              </div>
+            </div>
+            <div>
+              <h4 className="font-semibold text-white/90">Contact</h4>
+              <div className="mt-4 space-y-2 text-sm text-white/60">
+                <p>{company.phone}</p>
+                <p className="text-xs leading-relaxed">{company.address}</p>
+                <p className="text-xs">{company.hours}</p>
+              </div>
+            </div>
+            <div>
+              <h4 className="font-semibold text-white/90">Legal</h4>
+              <div className="mt-4 flex flex-col gap-2 text-sm text-white/60">
+                <Link to="/legal/privacy" className="hover:text-amber-400">Privacy Policy</Link>
+                <Link to="/legal/cookies" className="hover:text-amber-400">Cookie Policy</Link>
+                <Link to="/legal/terms" className="hover:text-amber-400">Terms & Conditions</Link>
+              </div>
             </div>
           </div>
-          <div>
-            <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-white/70">Legal</h4>
-            <div className="mt-4 flex flex-col gap-3 text-sm text-white/65">
-              <Link to="/legal/privacy" className="hover:text-white">Privacy Policy</Link>
-              <Link to="/legal/cookies" className="hover:text-white">Cookie Policy</Link>
-              <Link to="/legal/terms" className="hover:text-white">Terms & Conditions</Link>
-            </div>
+          <div className="mt-8 border-t border-white/10 pt-8 text-center text-xs text-white/40">
+            © 2024 {company.name}. All rights reserved.
           </div>
         </div>
       </footer>
@@ -402,7 +351,7 @@ function NavItem({ to, children }) {
     <NavLink
       to={to}
       className={({ isActive }) =>
-        isActive ? 'text-white' : 'text-white/75 transition hover:text-white'
+        `rounded-lg px-3 py-2 transition ${isActive ? 'bg-white/10 text-white' : 'text-white/70 hover:bg-white/5 hover:text-white'}`
       }
     >
       {children}
@@ -410,351 +359,385 @@ function NavItem({ to, children }) {
   )
 }
 
+function MobileNavItem({ to, children, onClick }) {
+  return (
+    <Link
+      to={to}
+      onClick={onClick}
+      className="rounded-lg px-4 py-3 text-white/80 transition hover:bg-white/5 hover:text-white"
+    >
+      {children}
+    </Link>
+  )
+}
+
+// SPLASH / ENTRY PAGE
+function SplashPage() {
+  return (
+    <main className="relative min-h-screen">
+      {/* Hero Background */}
+      <div className="absolute inset-0">
+        <img 
+          src="/images/hero-track.jpeg" 
+          alt="Motorcycle" 
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0a0d12]/70 via-[#0a0d12]/50 to-[#0a0d12]" />
+      </div>
+
+      {/* Content */}
+      <div className="relative z-10 flex min-h-screen flex-col">
+        {/* Top Stats */}
+        <div className="border-b border-white/10 bg-black/20 backdrop-blur-sm">
+          <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-6 px-4 py-3 text-center sm:gap-8 sm:px-6 lg:gap-12">
+            {[
+              { value: company.stats.bikesSold, label: 'Bikes Sold' },
+              { value: company.stats.satisfaction, label: 'Satisfaction' },
+              { value: company.stats.warranty, label: 'Warranty' },
+              { value: company.stats.experience, label: 'Experience' },
+            ].map((stat) => (
+              <div key={stat.label} className="text-center">
+                <div className="text-lg font-bold text-amber-400 sm:text-xl">{stat.value}</div>
+                <div className="text-xs text-white/50">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Main Hero Content */}
+        <div className="flex flex-1 items-center justify-center px-4 py-16 sm:px-6">
+          <div className="mx-auto max-w-4xl text-center">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-300">
+              <ShieldCheck className="h-4 w-4" />
+              HPI Checked · 30-Day Warranty · UK Delivery
+            </div>
+            
+            <h1 className="text-4xl font-bold leading-tight tracking-tight text-white sm:text-6xl lg:text-7xl">
+              {company.slogan}
+            </h1>
+            
+            <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-white/70 sm:text-xl">
+              {company.philosophy}
+            </p>
+
+            <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+              <Link
+                to="/home"
+                className="group flex w-full items-center justify-center gap-2 rounded-full bg-amber-500 px-8 py-4 text-base font-semibold text-black transition hover:bg-amber-400 sm:w-auto"
+              >
+                Explore Our Bikes
+                <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />
+              </Link>
+              <a
+                href={company.phoneHref}
+                className="flex w-full items-center justify-center gap-2 rounded-full border border-white/20 bg-white/5 px-8 py-4 text-base font-medium text-white backdrop-blur transition hover:bg-white/10 sm:w-auto"
+              >
+                <Phone className="h-5 w-5" />
+                Call {company.phone}
+              </a>
+            </div>
+          </div>
+        </div>
+
+        {/* Service Cards */}
+        <div className="border-t border-white/10 bg-gradient-to-t from-[#0a0d12] to-transparent px-4 py-8 sm:px-6">
+          <div className="mx-auto grid max-w-6xl gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {services.map((service) => (
+              <Link
+                key={service.title}
+                to={service.link}
+                className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 transition hover:border-white/20 hover:bg-white/10"
+              >
+                <div className={`absolute inset-0 bg-gradient-to-br ${service.color} opacity-0 transition group-hover:opacity-100`} />
+                <div className="relative">
+                  <service.icon className="h-8 w-8 text-amber-400" />
+                  <h3 className="mt-4 text-lg font-semibold text-white">{service.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-white/60">{service.desc}</p>
+                  <div className="mt-4 flex items-center gap-1 text-sm text-amber-400">
+                    Learn more <ChevronRight className="h-4 w-4" />
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Scroll Indicator */}
+        <div className="flex justify-center py-4">
+          <Link to="/home" className="flex flex-col items-center gap-2 text-white/40 transition hover:text-white">
+            <span className="text-xs">Scroll to explore</span>
+            <ChevronDown className="h-5 w-5 animate-bounce" />
+          </Link>
+        </div>
+      </div>
+    </main>
+  )
+}
+
+// HOME PAGE - Module Based Layout
 function HomePage() {
   return (
     <main>
-      <section className="relative overflow-hidden border-b border-white/10">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(245,158,11,0.16),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(59,130,246,0.16),transparent_30%)]" />
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-20 sm:px-6 lg:grid-cols-[1.2fr_0.9fr] lg:px-8 lg:py-24">
-          <div className="relative z-10">
-            <p className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.22em] text-white/65">
-              <ShieldCheck className="h-4 w-4 text-emerald-300" />
-              HPI checked · warranty included · appointment based
-            </p>
-            <h1 className="mt-6 max-w-3xl text-5xl font-semibold leading-tight tracking-tight text-white sm:text-6xl">
-              {company.subtitle}
-            </h1>
-            <p className="mt-5 max-w-2xl text-lg leading-8 text-white/70">{company.strapline}</p>
-            <div className="mt-8 flex flex-wrap gap-4">
-              <PrimaryLink to="/bikes">View Used Bikes</PrimaryLink>
-              <SecondaryLink to="/sell-your-bike">Value My Bike</SecondaryLink>
-              <SecondaryLink to="/contact">Book an Appointment</SecondaryLink>
+      {/* Featured Bikes Module */}
+      <section className="border-b border-white/10 px-4 py-16 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-sm font-medium uppercase tracking-wider text-amber-400">Featured Stock</p>
+              <h2 className="mt-2 text-3xl font-bold text-white sm:text-4xl">Latest Arrivals</h2>
+              <p className="mt-3 max-w-xl text-white/60">Hand-picked motorcycles ready for the road.</p>
             </div>
-            <div className="mt-10 grid max-w-3xl gap-4 sm:grid-cols-3">
-              {trustBadges.map((badge) => (
-                <div key={badge} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm text-white/75">
-                  {badge}
+            <Link
+              to="/bikes"
+              className="inline-flex items-center gap-2 rounded-full border border-white/20 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-white/5"
+            >
+              View All Bikes <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {bikes.slice(0, 3).map((bike) => (
+              <BikeCard key={bike.slug} bike={bike} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Trust Badges Module */}
+      <section className="border-b border-white/10 bg-white/[0.02] px-4 py-16 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="text-center">
+            <p className="text-sm font-medium uppercase tracking-wider text-amber-400">Our Promise</p>
+            <h2 className="mt-2 text-3xl font-bold text-white">Why Buy From Knights</h2>
+          </div>
+
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {trustBadges.map((badge) => (
+              <div
+                key={badge.label}
+                className="flex items-start gap-4 rounded-2xl border border-white/10 bg-white/5 p-5"
+              >
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-500/10">
+                  <badge.icon className="h-6 w-6 text-amber-400" />
                 </div>
-              ))}
-            </div>
-          </div>
-          <div className="relative z-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
-            <img src="/images/hero-track.jpeg" alt="Racing motorcycle" className="hero-image h-64 rounded-3xl object-cover sm:h-72 lg:col-span-2 lg:h-80" />
-            <img src="/images/showroom.jpg" alt="Showroom" className="hero-image h-44 rounded-3xl object-cover sm:h-56" />
-            <img src="/images/workshop.webp" alt="Workshop" className="hero-image h-44 rounded-3xl object-cover sm:h-56" />
+                <div>
+                  <h3 className="font-semibold text-white">{badge.label}</h3>
+                  <p className="mt-1 text-sm text-white/60">{badge.desc}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      <section className="border-b border-white/10 bg-black/30">
-        <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-5 lg:px-8">
-          {[
-            { icon: ShieldCheck, label: 'HPI Checked', copy: 'History checked before sale' },
-            { icon: Wrench, label: 'Prepared in-house', copy: 'Oil, fluids, tyres, electricals' },
-            { icon: Clock3, label: 'By appointment', copy: 'Dedicated viewing experience' },
-            { icon: Truck, label: 'Nationwide delivery', copy: 'UK delivery available' },
-            { icon: Wallet, label: 'Part exchange welcome', copy: 'Fair valuation process' },
-          ].map(({ icon: Icon, label, copy }) => (
-            <div key={label} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-              <Icon className="h-5 w-5 text-amber-300" />
-              <p className="mt-3 text-sm font-medium text-white">{label}</p>
-              <p className="mt-1 text-sm text-white/55">{copy}</p>
+      {/* Services Grid Module */}
+      <section className="border-b border-white/10 px-4 py-16 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="text-center">
+            <p className="text-sm font-medium uppercase tracking-wider text-amber-400">Our Services</p>
+            <h2 className="mt-2 text-3xl font-bold text-white">Everything You Need</h2>
+          </div>
+
+          <div className="mt-10 grid gap-6 md:grid-cols-2">
+            {/* Buy Module */}
+            <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent p-8">
+              <img
+                src="/images/showroom.jpg"
+                alt="Showroom"
+                className="absolute inset-0 h-full w-full object-cover opacity-20"
+              />
+              <div className="relative">
+                <Bike className="h-10 w-10 text-amber-400" />
+                <h3 className="mt-4 text-2xl font-bold text-white">Buy a Motorcycle</h3>
+                <p className="mt-2 text-white/60">Quality used bikes from 125cc to 1000cc. Every bike HPI checked and fully prepared.</p>
+                <Link to="/bikes" className="mt-6 inline-flex items-center gap-2 text-amber-400 hover:underline">
+                  Browse Stock <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
             </div>
-          ))}
+
+            {/* Sell Module */}
+            <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent p-8">
+              <img
+                src="/images/workshop.webp"
+                alt="Workshop"
+                className="absolute inset-0 h-full w-full object-cover opacity-20"
+              />
+              <div className="relative">
+                <Wallet className="h-10 w-10 text-emerald-400" />
+                <h3 className="mt-4 text-2xl font-bold text-white">Sell Your Bike</h3>
+                <p className="mt-2 text-white/60">Instant cash purchase or part exchange. Fair valuations based on market conditions.</p>
+                <Link to="/sell-your-bike" className="mt-6 inline-flex items-center gap-2 text-emerald-400 hover:underline">
+                  Get Valuation <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Finance Module */}
+            <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent p-8">
+              <img
+                src="/images/finance.jpg"
+                alt="Finance"
+                className="absolute inset-0 h-full w-full object-cover opacity-20"
+              />
+              <div className="relative">
+                <CreditCard className="h-10 w-10 text-blue-400" />
+                <h3 className="mt-4 text-2xl font-bold text-white">Motorcycle Finance</h3>
+                <p className="mt-2 text-white/60">Flexible payment options from £79/month. Apply online and get a decision quickly.</p>
+                <Link to="/finance" className="mt-6 inline-flex items-center gap-2 text-blue-400 hover:underline">
+                  Explore Finance <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Delivery Module */}
+            <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent p-8">
+              <img
+                src="/images/delivery.jpg"
+                alt="Delivery"
+                className="absolute inset-0 h-full w-full object-cover opacity-20"
+              />
+              <div className="relative">
+                <Truck className="h-10 w-10 text-purple-400" />
+                <h3 className="mt-4 text-2xl font-bold text-white">UK Delivery</h3>
+                <p className="mt-2 text-white/60">Can't collect in person? We deliver nationwide. Your bike arrives safely at your door.</p>
+                <Link to="/contact" className="mt-6 inline-flex items-center gap-2 text-purple-400 hover:underline">
+                  Arrange Delivery <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-18 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+      {/* CTA Module */}
+      <section className="px-4 py-16 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-4xl rounded-3xl border border-white/10 bg-gradient-to-br from-amber-500/10 to-orange-600/10 p-8 text-center sm:p-12">
+          <h2 className="text-3xl font-bold text-white">Ready to Find Your Perfect Ride?</h2>
+          <p className="mx-auto mt-4 max-w-xl text-white/70">
+            Browse our current stock, get a valuation for your bike, or contact us to arrange a viewing.
+          </p>
+          <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <Link
+              to="/bikes"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-amber-500 px-8 py-4 font-semibold text-black transition hover:bg-amber-400 sm:w-auto"
+            >
+              View Bikes <ArrowRight className="h-5 w-5" />
+            </Link>
+            <a
+              href={company.phoneHref}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/20 bg-white/5 px-8 py-4 font-medium text-white transition hover:bg-white/10 sm:w-auto"
+            >
+              <Phone className="h-5 w-5" />
+              Call Now
+            </a>
+          </div>
+        </div>
+      </section>
+    </main>
+  )
+}
+
+// INVENTORY PAGE
+function InventoryPage() {
+  return (
+    <main className="px-4 py-12 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm uppercase tracking-[0.2em] text-amber-300/80">Featured stock</p>
-            <h2 className="mt-3 text-3xl font-semibold text-white sm:text-4xl">Ready-to-ride used motorcycles</h2>
+            <p className="text-sm font-medium uppercase tracking-wider text-amber-400">For Sale</p>
+            <h1 className="mt-2 text-4xl font-bold text-white">Used Motorcycles</h1>
+            <p className="mt-3 text-white/60">{bikes.length} bikes available</p>
           </div>
-          <Link to="/bikes" className="inline-flex items-center gap-2 text-sm text-white/70 transition hover:text-white">
-            Browse all bikes <ChevronRight className="h-4 w-4" />
-          </Link>
         </div>
-        <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {bikes.slice(0, 6).map((bike) => (
+
+        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {bikes.map((bike) => (
             <BikeCard key={bike.slug} bike={bike} />
           ))}
         </div>
-      </section>
-
-      <section className="border-y border-white/10 bg-white/[0.02]">
-        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-18 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8">
-          <div className="rounded-[2rem] border border-white/10 bg-black/35 p-8">
-            <p className="text-sm uppercase tracking-[0.2em] text-amber-300/80">Sell your bike</p>
-            <h2 className="mt-3 text-3xl font-semibold text-white">A faster, cleaner valuation journey</h2>
-            <p className="mt-4 text-base leading-8 text-white/68">
-              The original site already mentions part exchange and instant cash purchase. This new
-              version upgrades that into a real customer flow: registration, mileage, condition,
-              valuation request, and follow-up.
-            </p>
-            <div className="mt-8 grid gap-4 sm:grid-cols-2">
-              <InputBox label="Registration" placeholder="e.g. YX21 ABC" />
-              <InputBox label="Mileage" placeholder="e.g. 12850" />
-            </div>
-            <div className="mt-4 flex flex-wrap gap-3">
-              <PrimaryLink to="/sell-your-bike">Get an Instant Valuation</PrimaryLink>
-              <SecondaryLink to="/contact">Request a Call Back</SecondaryLink>
-            </div>
-          </div>
-          <div className="grid gap-4 md:grid-cols-3">
-            {[
-              ['Step 1', 'Enter your bike details'],
-              ['Step 2', 'Receive a valuation or call-back'],
-              ['Step 3', 'Arrange inspection, collection, and secure payment'],
-            ].map(([step, copy]) => (
-              <div key={step} className="rounded-[2rem] border border-white/10 bg-white/[0.03] p-6">
-                <p className="text-sm uppercase tracking-[0.18em] text-amber-300/80">{step}</p>
-                <p className="mt-5 text-lg font-medium leading-8 text-white">{copy}</p>
-              </div>
-            ))}
-            <img src="/images/delivery.jpg" alt="Delivery" className="hero-image h-60 rounded-[2rem] object-cover md:col-span-3" />
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-4 py-18 sm:px-6 lg:px-8">
-        <div className="grid gap-10 lg:grid-cols-[1fr_1.1fr]">
-          <div>
-            <p className="text-sm uppercase tracking-[0.2em] text-amber-300/80">Finance</p>
-            <h2 className="mt-3 text-3xl font-semibold text-white">Finance belongs in the buying journey, not hidden in the footer</h2>
-            <p className="mt-4 text-base leading-8 text-white/68">
-              This concept places finance in the core flow: homepage, stock cards, and bike detail pages.
-              Buyers in this price range often respond better to monthly affordability than total price alone.
-            </p>
-            <div className="mt-6 flex gap-3">
-              <PrimaryLink to="/finance">Explore Finance</PrimaryLink>
-              <SecondaryLink to="/bikes">See bikes with finance examples</SecondaryLink>
-            </div>
-          </div>
-          <div className="grid gap-4 md:grid-cols-3">
-            {financeHighlights.map(({ title, copy, icon: Icon }) => (
-              <div key={title} className="rounded-[2rem] border border-white/10 bg-white/[0.03] p-6">
-                <Icon className="h-6 w-6 text-amber-300" />
-                <h3 className="mt-5 text-lg font-medium text-white">{title}</h3>
-                <p className="mt-3 text-sm leading-7 text-white/60">{copy}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="border-y border-white/10 bg-black/35">
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-18 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8">
-          <div>
-            <p className="text-sm uppercase tracking-[0.2em] text-amber-300/80">Why buy from Knights</p>
-            <h2 className="mt-3 text-3xl font-semibold text-white">Built from the original public promises, rebuilt into a clearer trust system</h2>
-            <div className="mt-6 space-y-4 text-white/68">
-              <p>
-                The old site already communicated the right foundations: HPI checks, a 30-day warranty,
-                pre-delivery inspection, and nationwide delivery.
-              </p>
-              <p>
-                The redesign keeps those strengths but turns them into visible trust modules so buyers can scan,
-                compare, and act faster.
-              </p>
-            </div>
-            <div className="mt-8 grid gap-4 sm:grid-cols-2">
-              {prepItems.map((item) => (
-                <div key={item} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white/70">
-                  {item}
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="grid gap-4">
-            <img src="/images/finance.jpg" alt="Finance conversation" className="hero-image h-72 rounded-[2rem] object-cover" />
-            <div className="grid gap-4 md:grid-cols-3">
-              {reviews.map((review) => (
-                <div key={review.name} className="rounded-[2rem] border border-white/10 bg-white/[0.03] p-6">
-                  <Star className="h-5 w-5 text-amber-300" />
-                  <p className="mt-4 text-sm leading-7 text-white/70">“{review.quote}”</p>
-                  <p className="mt-4 text-sm font-medium text-white">{review.name}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-4 py-18 sm:px-6 lg:px-8">
-        <div className="grid gap-8 rounded-[2rem] border border-white/10 bg-white/[0.03] p-8 lg:grid-cols-[1fr_0.95fr] lg:p-10">
-          <div>
-            <p className="text-sm uppercase tracking-[0.2em] text-amber-300/80">Visit & contact</p>
-            <h2 className="mt-3 text-3xl font-semibold text-white">Appointment-based, premium, and low-pressure</h2>
-            <div className="mt-6 space-y-4 text-white/68">
-              <p>{company.address}</p>
-              <p>{company.hours}</p>
-              <p>{company.inquiry}</p>
-            </div>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <a href={company.phoneHref} className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-medium text-black transition hover:bg-amber-300">
-                <Phone className="h-4 w-4" />
-                {company.phone}
-              </a>
-              <SecondaryLink to="/contact">Book an Appointment</SecondaryLink>
-            </div>
-          </div>
-          <div className="rounded-[2rem] border border-white/10 bg-black/35 p-6">
-            <div className="space-y-4 text-sm text-white/65">
-              <InfoRow icon={MapPin} label="Location" value="Leeds, West Yorkshire" />
-              <InfoRow icon={Clock3} label="Viewing" value="Appointment only" />
-              <InfoRow icon={Truck} label="Delivery" value="Available across the UK" />
-              <InfoRow icon={Wallet} label="Selling" value="Part exchange and cash purchase" />
-            </div>
-          </div>
-        </div>
-      </section>
-    </main>
-  )
-}
-
-function InventoryPage() {
-  return (
-    <main className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-      <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-sm uppercase tracking-[0.2em] text-amber-300/80">Used Bikes</p>
-          <h1 className="mt-3 text-4xl font-semibold text-white">Used motorcycles for sale</h1>
-          <p className="mt-4 max-w-2xl text-base leading-8 text-white/68">
-            A cleaner, more conversion-focused stock listing page built from the current public inventory.
-          </p>
-        </div>
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white/65">
-          {bikes.length} bikes shown in this preview build
-        </div>
-      </div>
-
-      <div className="mt-8 grid gap-4 rounded-[2rem] border border-white/10 bg-white/[0.03] p-4 lg:grid-cols-[1fr_220px_220px_220px_auto] lg:p-6">
-        <div className="rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white/60">Search by make or model</div>
-        <div className="rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white/60">Price range</div>
-        <div className="rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white/60">Engine size</div>
-        <div className="rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white/60">Bike type</div>
-        <button className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-medium text-black transition hover:bg-amber-300">
-          <Search className="h-4 w-4" />
-          Search Bikes
-        </button>
-      </div>
-
-      <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-        {bikes.map((bike) => (
-          <BikeCard key={bike.slug} bike={bike} />
-        ))}
       </div>
     </main>
   )
 }
 
+// BIKE DETAIL PAGE
 function BikeDetailPage() {
   const { slug } = useParams()
   const bike = getBike(slug)
 
   if (!bike) {
     return (
-      <main className="mx-auto max-w-4xl px-4 py-24 text-center sm:px-6 lg:px-8">
-        <h1 className="text-4xl font-semibold text-white">Bike not found</h1>
-        <p className="mt-4 text-white/65">This preview route does not exist yet.</p>
-        <div className="mt-8">
-          <PrimaryLink to="/bikes">Back to stock</PrimaryLink>
+      <main className="flex min-h-[60vh] items-center justify-center px-4">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold text-white">Bike Not Found</h1>
+          <Link to="/bikes" className="mt-4 inline-flex items-center gap-2 text-amber-400 hover:underline">
+            <ArrowRight className="h-4 w-4 rotate-180" /> Back to Stock
+          </Link>
         </div>
       </main>
     )
   }
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-      <div className="mb-6 text-sm text-white/45">
-        <Link to="/bikes" className="transition hover:text-white">Used Bikes</Link>
-        <span className="mx-2">/</span>
-        <span>{bike.title}</span>
-      </div>
+    <main className="px-4 py-12 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl">
+        <Link to="/bikes" className="inline-flex items-center gap-2 text-sm text-white/60 hover:text-white">
+          <ArrowRight className="h-4 w-4 rotate-180" /> Back to all bikes
+        </Link>
 
-      <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
-        <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.03]">
-          <img src={bike.image} alt={bike.title} className="h-full min-h-[420px] w-full object-cover" />
-        </div>
-
-        <div className="rounded-[2rem] border border-white/10 bg-white/[0.03] p-8">
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-amber-200">
-              {bike.badge}
-            </span>
-            <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs uppercase tracking-[0.18em] text-white/60">
-              {bike.status}
-            </span>
-          </div>
-          <h1 className="mt-5 text-4xl font-semibold text-white">{bike.title}</h1>
-          <div className="mt-6 flex items-end gap-4">
-            <p className="text-4xl font-semibold text-white">{formatPrice(bike.price)}</p>
-            <p className="text-sm text-white/55">From {formatPrice(monthlyFrom(bike.price))}/month</p>
-          </div>
-          <p className="mt-6 text-base leading-8 text-white/68">{bike.description}</p>
-
-          <div className="mt-8 grid gap-3 sm:grid-cols-2">
-            <Spec label="Year" value={String(bike.year)} icon={CalendarDays} />
-            <Spec label="Mileage" value={mileageText(bike.mileage)} icon={Gauge} />
-            <Spec label="Engine" value={bike.engine} icon={Bike} />
-            <Spec label="Style" value={bike.style} icon={Wrench} />
+        <div className="mt-6 grid gap-8 lg:grid-cols-2">
+          {/* Image */}
+          <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/5">
+            <img
+              src={bike.image}
+              alt={bike.title}
+              className="aspect-[4/3] w-full object-cover"
+            />
           </div>
 
-          <div className="mt-8 flex flex-wrap gap-3">
-            <a href="#reserve" className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-medium text-black transition hover:bg-amber-300">
-              Reserve This Bike
-              <ArrowRight className="h-4 w-4" />
-            </a>
-            <Link to="/finance" className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] px-5 py-3 text-sm font-medium text-white/85 transition hover:border-white/35 hover:bg-white/[0.08]">
-              Apply for Finance
-            </Link>
-            <Link to="/sell-your-bike" className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] px-5 py-3 text-sm font-medium text-white/85 transition hover:border-white/35 hover:bg-white/[0.08]">
-              Part Exchange Your Bike
-            </Link>
-          </div>
-
-          <div className="mt-8 grid gap-3 sm:grid-cols-2">
-            {trustBadges.map((badge) => (
-              <div key={badge} className="rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white/68">
-                {badge}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-10 grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="rounded-[2rem] border border-white/10 bg-white/[0.03] p-8">
-          <h2 className="text-2xl font-semibold text-white">Preparation & inspection</h2>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            {prepItems.map((item) => (
-              <div key={item} className="rounded-2xl border border-white/10 bg-black/25 p-4 text-sm leading-7 text-white/68">
-                {item}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          <div id="reserve" className="rounded-[2rem] border border-white/10 bg-white/[0.03] p-8">
-            <h2 className="text-2xl font-semibold text-white">Reserve this bike</h2>
-            <p className="mt-4 text-sm leading-7 text-white/65">
-              The upgraded flow is designed around a low-friction reservation option — ideal for buyers who want to secure stock before viewing.
-            </p>
-            <div className="mt-6 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-4 text-sm text-amber-100">
-              Suggested structure: Reserve online for <strong>£199</strong> and hold the bike for <strong>48 hours</strong>.
+          {/* Details */}
+          <div className="flex flex-col">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-400">
+                {bike.badge}
+              </span>
+              <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-white/60">
+                {bike.status}
+              </span>
             </div>
-          </div>
 
-          <div className="rounded-[2rem] border border-white/10 bg-white/[0.03] p-8">
-            <h2 className="text-2xl font-semibold text-white">Delivery & contact</h2>
-            <div className="mt-4 space-y-3 text-sm text-white/65">
-              <p>Nationwide delivery can be offered across the UK.</p>
-              <p>Viewings are handled by appointment to provide a focused, low-pressure experience.</p>
-              <a href={company.phoneHref} className="inline-flex items-center gap-2 text-amber-200 hover:text-amber-100">
-                <Phone className="h-4 w-4" />
-                {company.phone}
+            <h1 className="mt-4 text-3xl font-bold text-white sm:text-4xl">{bike.title}</h1>
+
+            <div className="mt-6 flex items-baseline gap-3">
+              <span className="text-4xl font-bold text-amber-400">{formatPrice(bike.price)}</span>
+              <span className="text-white/60">or from {formatPrice(monthlyFrom(bike.price))}/mo</span>
+            </div>
+
+            <p className="mt-6 text-white/70">{bike.description}</p>
+
+            <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+              <DetailBox label="Year" value={String(bike.year)} />
+              <DetailBox label="Mileage" value={mileageText(bike.mileage)} />
+              <DetailBox label="Engine" value={bike.engine} />
+              <DetailBox label="Style" value={bike.style} />
+            </div>
+
+            <div className="mt-8 flex flex-wrap gap-3">
+              <a
+                href={company.phoneHref}
+                className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-6 py-3 font-semibold text-black transition hover:bg-amber-400"
+              >
+                <Phone className="h-5 w-5" />
+                Enquire Now
               </a>
+              <Link
+                to="/finance"
+                className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-6 py-3 font-medium text-white transition hover:bg-white/10"
+              >
+                <CreditCard className="h-5 w-5" />
+                Finance Options
+              </Link>
             </div>
           </div>
         </div>
@@ -763,251 +746,307 @@ function BikeDetailPage() {
   )
 }
 
+// SELL PAGE
 function SellPage() {
   return (
-    <main className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
-      <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr]">
-        <div>
-          <p className="text-sm uppercase tracking-[0.2em] text-amber-300/80">Sell Your Bike</p>
-          <h1 className="mt-3 text-4xl font-semibold text-white">Fast valuation, cleaner lead capture, and a stronger trade-in journey</h1>
-          <p className="mt-5 text-base leading-8 text-white/68">
-            This page upgrades the original public promise of part exchange and instant cash purchase into a proper dealership product flow.
+    <main className="px-4 py-12 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-4xl">
+        <div className="text-center">
+          <p className="text-sm font-medium uppercase tracking-wider text-emerald-400">Sell Your Bike</p>
+          <h1 className="mt-2 text-4xl font-bold text-white">Get an Instant Valuation</h1>
+          <p className="mx-auto mt-4 max-w-2xl text-white/60">
+            Part exchange or instant cash purchase. Fair valuations based on current market conditions.
           </p>
-          <div className="mt-8 grid gap-4 sm:grid-cols-3">
-            {[
-              'Enter registration and mileage',
-              'Receive valuation or callback',
-              'Arrange inspection, collection, and payment',
-            ].map((item) => (
-              <div key={item} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm leading-7 text-white/68">
-                {item}
-              </div>
-            ))}
-          </div>
         </div>
 
-        <div className="rounded-[2rem] border border-white/10 bg-white/[0.03] p-8">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <FormInput label="Registration Number" placeholder="YX21 ABC" />
-            <FormInput label="Mileage" placeholder="12850" />
-            <FormInput label="Bike Condition" placeholder="Excellent / Good / Fair" />
-            <FormInput label="Service History" placeholder="Full / Partial / None" />
-            <FormInput label="Outstanding Finance" placeholder="Yes / No" />
-            <FormInput label="Postcode" placeholder="LS12 3HT" />
-            <FormInput label="Full Name" placeholder="Your name" />
+        <div className="mt-10 rounded-3xl border border-white/10 bg-white/5 p-8">
+          <div className="grid gap-6 sm:grid-cols-2">
+            <FormInput label="Registration Number" placeholder="e.g. YX21 ABC" />
+            <FormInput label="Current Mileage" placeholder="e.g. 12500" />
+            <FormInput label="Make & Model" placeholder="e.g. Yamaha MT-07" />
+            <FormInput label="Year" placeholder="e.g. 2021" />
+            <div className="sm:col-span-2">
+              <FormInput label="Your Name" placeholder="Full name" />
+            </div>
             <FormInput label="Phone Number" placeholder="07..." />
-            <div className="sm:col-span-2">
-              <FormInput label="Email Address" placeholder="you@example.com" />
-            </div>
-            <div className="sm:col-span-2">
-              <label className="mb-2 block text-sm font-medium text-white/75">Notes</label>
-              <textarea className="h-32 w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none ring-0 placeholder:text-white/30" placeholder="Tell us about condition, modifications, keys, or preferred collection timing" />
-            </div>
+            <FormInput label="Email Address" placeholder="you@example.com" />
           </div>
+
           <div className="mt-6 flex flex-wrap gap-3">
-            <button className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-medium text-black transition hover:bg-amber-300">
-              Get an Instant Valuation
-              <ArrowRight className="h-4 w-4" />
+            <button className="inline-flex items-center gap-2 rounded-full bg-emerald-500 px-6 py-3 font-semibold text-black transition hover:bg-emerald-400">
+              Get Valuation <ArrowRight className="h-5 w-5" />
             </button>
-            <Link to="/contact" className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] px-5 py-3 text-sm font-medium text-white/85 transition hover:border-white/35 hover:bg-white/[0.08]">
-              Request a Call Back
-            </Link>
-          </div>
-        </div>
-      </div>
-    </main>
-  )
-}
-
-function FinancePage() {
-  return (
-    <main className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-      <div className="max-w-3xl">
-        <p className="text-sm uppercase tracking-[0.2em] text-amber-300/80">Finance</p>
-        <h1 className="mt-3 text-4xl font-semibold text-white">Motorcycle finance made clearer and easier to act on</h1>
-        <p className="mt-5 text-base leading-8 text-white/68">
-          The purpose of this page is not just to mention finance availability. It is designed to educate, reassure, and convert — especially for buyers who shop by monthly affordability.
-        </p>
-      </div>
-
-      <div className="mt-10 grid gap-6 lg:grid-cols-3">
-        {financeHighlights.map(({ title, copy, icon: Icon }) => (
-          <div key={title} className="rounded-[2rem] border border-white/10 bg-white/[0.03] p-6">
-            <Icon className="h-6 w-6 text-amber-300" />
-            <h2 className="mt-4 text-xl font-semibold text-white">{title}</h2>
-            <p className="mt-3 text-sm leading-7 text-white/65">{copy}</p>
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-10 grid gap-8 lg:grid-cols-[1fr_1fr]">
-        <div className="rounded-[2rem] border border-white/10 bg-white/[0.03] p-8">
-          <h2 className="text-2xl font-semibold text-white">Representative example</h2>
-          <div className="mt-6 space-y-3 text-sm text-white/68">
-            <InfoRow label="Cash Price" value="£3,000" />
-            <InfoRow label="Deposit" value="£300" />
-            <InfoRow label="Amount of Credit" value="£2,700" />
-            <InfoRow label="APR" value="16.9% representative" />
-            <InfoRow label="Term" value="48 months" />
-            <InfoRow label="Monthly Payment" value="from £79–£95" />
-          </div>
-        </div>
-
-        <div className="rounded-[2rem] border border-white/10 bg-white/[0.03] p-8">
-          <h2 className="text-2xl font-semibold text-white">Suggested application journey</h2>
-          <div className="mt-6 space-y-4 text-sm leading-7 text-white/68">
-            <p>1. Choose a bike from stock.</p>
-            <p>2. Review the monthly example on the bike detail page.</p>
-            <p>3. Submit a finance enquiry or application.</p>
-            <p>4. Confirm affordability and next steps with the dealership team.</p>
-            <p>5. Proceed to reservation, appointment, or delivery scheduling.</p>
-          </div>
-          <div className="mt-6 rounded-2xl border border-white/10 bg-black/25 p-4 text-sm text-white/60">
-            Future compliance layer: credit-broker wording, lender disclosures, and finance declaration.
-          </div>
-        </div>
-      </div>
-    </main>
-  )
-}
-
-function ContactPage() {
-  return (
-    <main className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
-      <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr]">
-        <div>
-          <p className="text-sm uppercase tracking-[0.2em] text-amber-300/80">Contact</p>
-          <h1 className="mt-3 text-4xl font-semibold text-white">Book a viewing, ask about delivery, or discuss a bike directly</h1>
-          <div className="mt-6 space-y-4 text-base leading-8 text-white/68">
-            <p>{company.address}</p>
-            <p>{company.hours}</p>
-            <p>{company.inquiry}</p>
-          </div>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <a href={company.phoneHref} className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-medium text-black transition hover:bg-amber-300">
-              <Phone className="h-4 w-4" />
-              {company.phone}
+            <a
+              href={company.phoneHref}
+              className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-6 py-3 font-medium text-white transition hover:bg-white/10"
+            >
+              <Phone className="h-5 w-5" />
+              Call {company.phone}
             </a>
           </div>
         </div>
 
-        <div className="rounded-[2rem] border border-white/10 bg-white/[0.03] p-8">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <FormInput label="Full Name" placeholder="Your name" />
-            <FormInput label="Phone Number" placeholder="07..." />
-            <div className="sm:col-span-2">
-              <FormInput label="Email Address" placeholder="you@example.com" />
+        <div className="mt-10 grid gap-6 sm:grid-cols-3">
+          {[
+            { title: 'Step 1', desc: 'Enter your bike details above' },
+            { title: 'Step 2', desc: 'Receive a valuation within hours' },
+            { title: 'Step 3', desc: 'Arrange inspection & get paid' },
+          ].map((step, i) => (
+            <div key={step.title} className="rounded-2xl border border-white/10 bg-white/5 p-6 text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-400">
+                {i + 1}
+              </div>
+              <h3 className="mt-4 font-semibold text-white">{step.title}</h3>
+              <p className="mt-2 text-sm text-white/60">{step.desc}</p>
             </div>
-            <FormInput label="Interested Bike" placeholder="Bike model or stock reference" />
-            <FormInput label="Preferred Date" placeholder="Preferred viewing date" />
-            <div className="sm:col-span-2">
-              <label className="mb-2 block text-sm font-medium text-white/75">Message</label>
-              <textarea className="h-32 w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none placeholder:text-white/30" placeholder="Tell us what you want to know, what bike you are interested in, or whether you need delivery / finance / part exchange support" />
-            </div>
-          </div>
-          <button className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-medium text-black transition hover:bg-amber-300">
-            Book an Appointment
-            <ArrowRight className="h-4 w-4" />
-          </button>
+          ))}
         </div>
       </div>
     </main>
   )
 }
 
-function LegalPage() {
-  const { type = 'privacy' } = useParams()
-  const page = legalPageCopy[type] || legalPageCopy.privacy
-
+// FINANCE PAGE
+function FinancePage() {
   return (
-    <main className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
-      <p className="text-sm uppercase tracking-[0.2em] text-amber-300/80">Legal</p>
-      <h1 className="mt-3 text-4xl font-semibold text-white">{page.title}</h1>
-      <div className="mt-8 space-y-6">
-        {page.sections.map(([title, body]) => (
-          <section key={title} className="rounded-[2rem] border border-white/10 bg-white/[0.03] p-8">
-            <h2 className="text-2xl font-semibold text-white">{title}</h2>
-            <p className="mt-4 text-base leading-8 text-white/68">{body}</p>
-          </section>
-        ))}
+    <main className="px-4 py-12 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-4xl">
+        <div className="text-center">
+          <p className="text-sm font-medium uppercase tracking-wider text-blue-400">Finance</p>
+          <h1 className="mt-2 text-4xl font-bold text-white">Flexible Payment Options</h1>
+          <p className="mx-auto mt-4 max-w-2xl text-white/60">
+            Spread the cost of your new motorcycle with our finance partners.
+          </p>
+        </div>
+
+        <div className="mt-10 rounded-3xl border border-white/10 bg-white/5 p-8">
+          <h2 className="text-2xl font-bold text-white">Representative Example</h2>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <InfoRow label="Cash Price" value="£3,000" />
+            <InfoRow label="Deposit" value="£300" />
+            <InfoRow label="Credit Amount" value="£2,700" />
+            <InfoRow label="APR" value="16.9% Representative" />
+            <InfoRow label="Term" value="48 months" />
+            <InfoRow label="Monthly Payment" value="From £79" />
+          </div>
+        </div>
+
+        <div className="mt-8 text-center">
+          <a
+            href={company.phoneHref}
+            className="inline-flex items-center gap-2 rounded-full bg-blue-500 px-8 py-4 font-semibold text-white transition hover:bg-blue-400"
+          >
+            <Phone className="h-5 w-5" />
+            Discuss Finance Options
+          </a>
+        </div>
       </div>
     </main>
   )
 }
+
+// CONTACT PAGE
+function ContactPage() {
+  return (
+    <main className="px-4 py-12 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-4xl">
+        <div className="text-center">
+          <p className="text-sm font-medium uppercase tracking-wider text-amber-400">Contact Us</p>
+          <h1 className="mt-2 text-4xl font-bold text-white">Get In Touch</h1>
+          <p className="mx-auto mt-4 max-w-2xl text-white/60">
+            Book a viewing, ask about delivery, or discuss a bike directly with our team.
+          </p>
+        </div>
+
+        <div className="mt-10 grid gap-8 lg:grid-cols-2">
+          <div className="space-y-6">
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+              <Phone className="h-6 w-6 text-amber-400" />
+              <h3 className="mt-4 font-semibold text-white">Phone</h3>
+              <a href={company.phoneHref} className="mt-2 text-2xl font-bold text-amber-400 hover:underline">
+                {company.phone}
+              </a>
+              <p className="mt-2 text-sm text-white/60">Available 24/7 for enquiries</p>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+              <MapPin className="h-6 w-6 text-amber-400" />
+              <h3 className="mt-4 font-semibold text-white">Address</h3>
+              <p className="mt-2 text-white/60">{company.address}</p>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+              <Clock3 className="h-6 w-6 text-amber-400" />
+              <h3 className="mt-4 font-semibold text-white">Viewing Hours</h3>
+              <p className="mt-2 text-white/60">{company.hours}</p>
+              <p className="mt-2 text-sm text-white/40">By appointment only</p>
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-8">
+            <h2 className="text-xl font-bold text-white">Send a Message</h2>
+            <div className="mt-6 space-y-4">
+              <FormInput label="Your Name" placeholder="Full name" />
+              <FormInput label="Phone Number" placeholder="07..." />
+              <FormInput label="Email Address" placeholder="you@example.com" />
+              <div>
+                <label className="mb-2 block text-sm font-medium text-white/80">Message</label>
+                <textarea
+                  className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-white placeholder:text-white/30 focus:border-amber-500/50 focus:outline-none"
+                  rows={4}
+                  placeholder="How can we help you?"
+                />
+              </div>
+              <button className="w-full rounded-full bg-amber-500 py-3 font-semibold text-black transition hover:bg-amber-400">
+                Send Message
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  )
+}
+
+// ABOUT PAGE
+function AboutPage() {
+  return (
+    <main className="px-4 py-12 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-4xl">
+        <div className="text-center">
+          <p className="text-sm font-medium uppercase tracking-wider text-amber-400">About Us</p>
+          <h1 className="mt-2 text-4xl font-bold text-white">Why Knights Motorcycles</h1>
+          <p className="mx-auto mt-4 max-w-2xl text-white/60">
+            {company.philosophy}
+          </p>
+        </div>
+
+        <div className="mt-10 space-y-6">
+          <section className="rounded-3xl border border-white/10 bg-white/5 p-8">
+            <h2 className="text-2xl font-bold text-white">Our Preparation Process</h2>
+            <p className="mt-4 text-white/70">
+              Every motorcycle undergoes a comprehensive pre-delivery inspection before it leaves our workshop.
+            </p>
+            <ul className="mt-6 grid gap-3 sm:grid-cols-2">
+              {prepItems.map((item) => (
+                <li key={item} className="flex items-start gap-3 text-white/70">
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <section className="rounded-3xl border border-white/10 bg-white/5 p-8">
+            <h2 className="text-2xl font-bold text-white">Documentation & Support</h2>
+            <div className="mt-4 space-y-4 text-white/70">
+              <p>• Valid V5C registration document (logbook)</p>
+              <p>• Available service history (varies by bike)</p>
+              <p>• MOT history verification</p>
+              <p>• Written receipt of purchase</p>
+              <p>• 30-day warranty included</p>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+  )
+}
+
+// LEGAL PAGE
+function LegalPage() {
+  const { type } = useParams()
+  
+  const content = {
+    privacy: {
+      title: 'Privacy Policy',
+      sections: [
+        { heading: 'Information We Collect', text: 'We collect your name, contact details, and bike information when you enquire or request a valuation.' },
+        { heading: 'How We Use It', text: 'We use this information to respond to enquiries, arrange viewings, and process sales.' },
+        { heading: 'Data Protection', text: 'Your data is stored securely and never shared with third parties without consent.' },
+      ],
+    },
+    cookies: {
+      title: 'Cookie Policy',
+      sections: [
+        { heading: 'Essential Cookies', text: 'Required for the website to function properly.' },
+        { heading: 'Analytics Cookies', text: 'Help us understand how visitors use our site.' },
+        { heading: 'Marketing Cookies', text: 'Used to deliver relevant advertisements (if enabled).' },
+      ],
+    },
+    terms: {
+      title: 'Terms & Conditions',
+      sections: [
+        { heading: 'Vehicle Information', text: 'All descriptions and images are accurate to the best of our knowledge but should be verified in person.' },
+        { heading: 'Viewings', text: 'All viewings are by appointment only.' },
+        { heading: 'Warranty', text: '30-day warranty covers major mechanical faults. Full terms available on request.' },
+      ],
+    },
+  }
+
+  const page = content[type] || content.privacy
+
+  return (
+    <main className="px-4 py-12 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-3xl">
+        <h1 className="text-4xl font-bold text-white">{page.title}</h1>
+        <div className="mt-8 space-y-6">
+          {page.sections.map((section) => (
+            <section key={section.heading} className="rounded-2xl border border-white/10 bg-white/5 p-6">
+              <h2 className="text-xl font-semibold text-white">{section.heading}</h2>
+              <p className="mt-3 text-white/70">{section.text}</p>
+            </section>
+          ))}
+        </div>
+      </div>
+    </main>
+  )
+}
+
+// COMPONENTS
 
 function BikeCard({ bike }) {
   return (
-    <article className="overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.03] transition hover:-translate-y-1 hover:border-white/20 hover:bg-white/[0.05]">
-      <img src={bike.image} alt={bike.title} className="h-64 w-full object-cover" />
-      <div className="p-6">
-        <div className="flex items-center justify-between gap-3">
-          <span className="rounded-full border border-white/10 bg-black/25 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-white/65">
+    <Link to={`/bikes/${bike.slug}`} className="group block overflow-hidden rounded-2xl border border-white/10 bg-white/5 transition hover:border-white/20 hover:bg-white/[0.07]">
+      <div className="aspect-[4/3] overflow-hidden">
+        <img
+          src={bike.image}
+          alt={bike.title}
+          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+        />
+      </div>
+      <div className="p-5">
+        <div className="flex items-center gap-2">
+          <span className="rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-400">
             {bike.badge}
           </span>
-          <span className="text-xs uppercase tracking-[0.18em] text-white/40">{bike.status}</span>
+          <span className="text-xs text-white/40">{bike.status}</span>
         </div>
-        <h3 className="mt-4 text-xl font-semibold text-white">{bike.title}</h3>
-        <p className="mt-3 text-sm leading-7 text-white/60">{bike.description}</p>
-        <div className="mt-5 grid grid-cols-2 gap-3 text-sm text-white/65">
-          <CardMini label="Year" value={String(bike.year)} />
-          <CardMini label="Mileage" value={mileageText(bike.mileage)} />
-          <CardMini label="Engine" value={bike.engine} />
-          <CardMini label="Style" value={bike.style} />
-        </div>
-        <div className="mt-6 flex items-end justify-between gap-4">
-          <div>
-            <p className="text-2xl font-semibold text-white">{formatPrice(bike.price)}</p>
-            <p className="text-sm text-white/50">From {formatPrice(monthlyFrom(bike.price))}/month</p>
-          </div>
-          <Link
-            to={`/bikes/${bike.slug}`}
-            className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] px-4 py-2 text-sm font-medium text-white/85 transition hover:border-white/35 hover:bg-white/[0.08]"
-          >
-            View Details
-            <ChevronRight className="h-4 w-4" />
-          </Link>
+        <h3 className="mt-3 text-lg font-semibold text-white group-hover:text-amber-400 transition">{bike.title}</h3>
+        <p className="mt-2 line-clamp-2 text-sm text-white/60">{bike.description}</p>
+        <div className="mt-4 flex items-baseline gap-2">
+          <span className="text-xl font-bold text-white">{formatPrice(bike.price)}</span>
+          <span className="text-sm text-white/40">{bike.year} · {bike.mileage.toLocaleString()} mi</span>
         </div>
       </div>
-    </article>
+    </Link>
   )
 }
 
-function Spec({ label, value, icon: Icon }) {
+function DetailBox({ label, value }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-black/25 p-4">
-      <Icon className="h-4 w-4 text-amber-300" />
-      <p className="mt-3 text-xs uppercase tracking-[0.18em] text-white/40">{label}</p>
-      <p className="mt-1 text-sm font-medium text-white">{value}</p>
+    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+      <p className="text-xs uppercase tracking-wider text-white/40">{label}</p>
+      <p className="mt-1 font-semibold text-white">{value}</p>
     </div>
   )
 }
 
-function InfoRow({ icon: Icon, label, value }) {
+function InfoRow({ label, value }) {
   return (
-    <div className="flex items-start gap-3">
-      {Icon ? <Icon className="mt-0.5 h-4 w-4 text-amber-300" /> : <div className="mt-2 h-1.5 w-1.5 rounded-full bg-amber-300" />}
-      <div>
-        <p className="text-xs uppercase tracking-[0.18em] text-white/40">{label}</p>
-        <p className="mt-1 text-sm text-white/70">{value}</p>
-      </div>
-    </div>
-  )
-}
-
-function CardMini({ label, value }) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-black/20 p-3">
-      <p className="text-[11px] uppercase tracking-[0.18em] text-white/35">{label}</p>
-      <p className="mt-1 text-sm text-white/72">{value}</p>
-    </div>
-  )
-}
-
-function InputBox({ label, placeholder }) {
-  return (
-    <div>
-      <label className="mb-2 block text-sm font-medium text-white/75">{label}</label>
-      <div className="rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white/35">{placeholder}</div>
+    <div className="flex justify-between border-b border-white/10 pb-3">
+      <span className="text-white/60">{label}</span>
+      <span className="font-medium text-white">{value}</span>
     </div>
   )
 }
@@ -1015,26 +1054,13 @@ function InputBox({ label, placeholder }) {
 function FormInput({ label, placeholder }) {
   return (
     <div>
-      <label className="mb-2 block text-sm font-medium text-white/75">{label}</label>
-      <input className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none placeholder:text-white/30" placeholder={placeholder} />
+      <label className="mb-2 block text-sm font-medium text-white/80">{label}</label>
+      <input
+        type="text"
+        placeholder={placeholder}
+        className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-white placeholder:text-white/30 focus:border-amber-500/50 focus:outline-none"
+      />
     </div>
-  )
-}
-
-function PrimaryLink({ to, children }) {
-  return (
-    <Link to={to} className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-medium text-black transition hover:bg-amber-300">
-      {children}
-      <ArrowRight className="h-4 w-4" />
-    </Link>
-  )
-}
-
-function SecondaryLink({ to, children }) {
-  return (
-    <Link to={to} className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] px-5 py-3 text-sm font-medium text-white/85 transition hover:border-white/35 hover:bg-white/[0.08]">
-      {children}
-    </Link>
   )
 }
 
