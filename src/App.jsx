@@ -433,13 +433,18 @@ function NavItem({ to, children }) {
 function SplashPage() {
   return (
     <main className="relative min-h-[calc(100vh-64px)]">
-      {/* Background */}
+      {/* Background Video */}
       <div className="absolute inset-0">
-        <img 
-          src="/images/hero-track.jpeg" 
-          alt="Track" 
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
           className="h-full w-full object-cover"
-        />
+          poster="/images/hero-track.jpeg"
+        >
+          <source src="/videos/hero-video.mp4" type="video/mp4" />
+        </video>
         <div className="absolute inset-0 bg-gradient-to-b from-[#050508]/80 via-[#050508]/40 to-[#050508]" />
       </div>
 
