@@ -714,8 +714,12 @@ function BikeDetailPage() {
         </Link>
 
         <div className="mt-6 grid gap-8 lg:grid-cols-2">
-          <div className="overflow-hidden border border-cyan-400/30 bg-white/5">
-            <img src={bike.image} alt={bike.title} className="aspect-[4/3] w-full object-cover" />
+          <div className="overflow-hidden border border-cyan-400/30 bg-black/50">
+            <img 
+              src={bike.image} 
+              alt={bike.title} 
+              className="h-auto max-h-[500px] w-full object-contain" 
+            />
           </div>
 
           <div className="flex flex-col">
@@ -971,8 +975,12 @@ function LegalPage() {
 function BikeCard({ bike }) {
   return (
     <Link to={`/bikes/${bike.slug}`} className="group block overflow-hidden border border-white/10 bg-white/5 transition hover:border-cyan-400/50">
-      <div className="aspect-[4/3] overflow-hidden">
-        <img src={bike.image} alt={bike.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+      <div className="overflow-hidden bg-black/50">
+        <img 
+          src={bike.image} 
+          alt={bike.title} 
+          className="h-auto max-h-[280px] w-full object-contain transition duration-500 group-hover:scale-105" 
+        />
       </div>
       <div className="p-5">
         <div className="flex items-center gap-2">
