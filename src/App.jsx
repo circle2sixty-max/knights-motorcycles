@@ -32,10 +32,7 @@ const navItems = [
 
 const brandLogo = '/images/brand/knights-gold-logo.png'
 
-const heroVideos = [
-  '/videos/hero-track-gold-01.mp4',
-  '/videos/hero-track-gold-02.mp4',
-]
+const heroVideo = '/videos/hero-background-loop.mp4'
 
 const trustBadges = [
   ['HPI Checked', 'History reviewed before sale', ShieldCheck],
@@ -171,22 +168,20 @@ function SiteChrome() {
 }
 
 function SplashPage() {
-  const [activeHeroVideo, setActiveHeroVideo] = useState(0)
-
   return (
     <main className="relative min-h-[calc(100vh-76px)] overflow-hidden">
       <div className="absolute inset-0 bg-stone-950">
         <video
-          key={heroVideos[activeHeroVideo]}
           className="h-full w-full object-cover opacity-70"
           autoPlay
           muted
+          loop
           playsInline
+          preload="auto"
           poster={bikes[0].images[0]}
           aria-hidden="true"
-          onEnded={() => setActiveHeroVideo((index) => (index + 1) % heroVideos.length)}
         >
-          <source src={heroVideos[activeHeroVideo]} type="video/mp4" />
+          <source src={heroVideo} type="video/mp4" />
         </video>
         <div className="absolute inset-0 bg-gradient-to-b from-stone-950/72 via-stone-950/22 to-stone-950/86" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_42%,rgba(245,158,11,0.20),transparent_34%),radial-gradient(circle_at_18%_18%,rgba(255,255,255,0.10),transparent_26%)]" />
