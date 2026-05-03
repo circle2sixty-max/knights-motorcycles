@@ -755,7 +755,8 @@ export const serviceCopy = {
     'Based in West Yorkshire, Knights Motorcycles is a trusted motorcycle dealer specialising in quality used bikes from 125cc to 1000cc.',
     'The business is built around a simple idea: every rider deserves a motorcycle that has been checked, prepared and explained properly before they commit.',
     'Our storage maintains a carefully selected stock of more than 30 motorcycles, covering learner-friendly 125cc bikes through to larger-capacity machines for riders ready to move up.',
-    'Every bike in our storage undergoes a pre-delivery inspection, including oil change, brake fluid and coolant check where required, so it is ready for the road rather than simply ready for a photograph.',
+    'Every bike in our storage undergoes a pre-delivery inspection, including oil change, brake fluid, coolant and electrical systems checks where required, so it is ready for the road rather than simply ready for a photograph.',
+    'Located in West Yorkshire with 10+ years of motorcycle experience, Knights combines premium used bikes with a personal, appointment-led buying process.',
   ],
   story: [
     'Knights is for the rider who still remembers the first bike they truly wanted. Some customers arrive with a full licence and years of experience; others arrive with a helmet under one arm and the nerves of a first proper viewing. The job is the same either way: slow the buying process down, show the bike clearly, answer the awkward questions and help the rider leave with confidence.',

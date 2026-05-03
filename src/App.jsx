@@ -30,6 +30,8 @@ const navItems = [
   ['Contact', '/contact'],
 ]
 
+const brandLogo = '/images/brand/knights-gold-logo.png'
+
 const heroVideos = [
   '/videos/hero-track-gold-01.mp4',
   '/videos/hero-track-gold-02.mp4',
@@ -111,9 +113,7 @@ function SiteChrome() {
     <header className="sticky top-0 z-50 border-b border-stone-800 bg-stone-950/90 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
         <Link to="/" className="group flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-full border border-amber-400/40 bg-gradient-to-br from-amber-300 to-stone-900 text-sm font-black text-stone-950 shadow-lg shadow-amber-500/10">
-            KM
-          </div>
+          <img src={brandLogo} alt="Knights Motorcycles gold knight logo" className="h-12 w-12 rounded-full border border-amber-300/30 object-cover shadow-lg shadow-amber-500/10" />
           <div>
             <p className="text-sm font-black uppercase tracking-[0.28em] text-white">Knights</p>
             <p className="text-[10px] uppercase tracking-[0.24em] text-amber-300">Used Motorcycles Leeds</p>
@@ -187,9 +187,7 @@ function SplashPage() {
       <div className="relative z-10 flex min-h-[calc(100vh-76px)] flex-col">
         <div className="flex flex-1 items-center justify-center px-4 py-12">
           <div className="mx-auto max-w-5xl text-center">
-            <div className="mx-auto mb-8 flex h-20 w-20 items-center justify-center rounded-full border border-amber-300/50 bg-stone-950/45 text-2xl font-black tracking-tight text-amber-200 shadow-2xl shadow-amber-900/30 backdrop-blur-md">
-              KM
-            </div>
+            <img src={brandLogo} alt="Knights Motorcycles gold logo" className="mx-auto mb-8 h-28 w-28 rounded-full border border-amber-300/40 object-cover shadow-2xl shadow-amber-900/40" />
             <p className="text-xs font-black uppercase tracking-[0.34em] text-amber-200">Leeds · HPI checked · appointment viewing</p>
             <h1 className="mt-6 text-5xl font-black uppercase leading-[0.86] tracking-[-0.06em] text-white drop-shadow-2xl sm:text-7xl md:text-8xl">
               Knights Motorcycles
@@ -596,6 +594,9 @@ function ContactPage() {
             <ContactCard icon={Mail} label="Email" value={company.email} href={company.emailHref} />
             <ContactCard icon={MapPin} label="Address" value={company.address} href={company.mapsUrl} />
             <ContactCard icon={Clock} label="Hours" value={`${company.supportHours}. ${company.viewingHours}.`} />
+          </div>
+          <div className="mt-6 rounded-2xl border border-amber-300/25 bg-amber-300/10 p-5 text-sm leading-7 text-amber-50">
+            <strong className="text-amber-200">Viewing tip:</strong> while walk-ins are welcome where possible, booking an appointment gives the team time to prepare the motorcycle, walk you through the paperwork, and answer questions without pressure. Weekday mornings are usually the calmest time to view.
           </div>
         </div>
         <LeadForm type="viewing" title="Book a viewing" />
