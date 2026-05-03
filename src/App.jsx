@@ -88,7 +88,7 @@ function App() {
       <div className="min-h-screen bg-stone-950 text-stone-50 selection:bg-amber-400 selection:text-stone-950">
         <SiteChrome />
         <Routes>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<SplashPage />} />
           <Route path="/home" element={<HomePage />} />
           <Route path="/bikes" element={<InventoryPage />} />
           <Route path="/bikes/:slug" element={<BikeDetailPage />} />
@@ -162,32 +162,91 @@ function SiteChrome() {
   )
 }
 
+function SplashPage() {
+  const [activeHeroVideo, setActiveHeroVideo] = useState(0)
+
+  return (
+    <main className="relative min-h-[calc(100vh-76px)] overflow-hidden">
+      <div className="absolute inset-0 bg-stone-950">
+        <video
+          key={heroVideos[activeHeroVideo]}
+          className="h-full w-full object-cover opacity-70"
+          autoPlay
+          muted
+          playsInline
+          poster={bikes[0].images[0]}
+          aria-hidden="true"
+          onEnded={() => setActiveHeroVideo((index) => (index + 1) % heroVideos.length)}
+        >
+          <source src={heroVideos[activeHeroVideo]} type="video/mp4" />
+        </video>
+        <div className="absolute inset-0 bg-gradient-to-b from-stone-950/72 via-stone-950/22 to-stone-950/86" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_42%,rgba(245,158,11,0.20),transparent_34%),radial-gradient(circle_at_18%_18%,rgba(255,255,255,0.10),transparent_26%)]" />
+      </div>
+
+      <div className="relative z-10 flex min-h-[calc(100vh-76px)] flex-col">
+        <div className="flex flex-1 items-center justify-center px-4 py-12">
+          <div className="mx-auto max-w-5xl text-center">
+            <div className="mx-auto mb-8 flex h-20 w-20 items-center justify-center rounded-full border border-amber-300/50 bg-stone-950/45 text-2xl font-black tracking-tight text-amber-200 shadow-2xl shadow-amber-900/30 backdrop-blur-md">
+              KM
+            </div>
+            <p className="text-xs font-black uppercase tracking-[0.34em] text-amber-200">Leeds · HPI checked · appointment viewing</p>
+            <h1 className="mt-6 text-5xl font-black uppercase leading-[0.86] tracking-[-0.06em] text-white drop-shadow-2xl sm:text-7xl md:text-8xl">
+              Knights Motorcycles
+            </h1>
+            <p className="mx-auto mt-6 max-w-2xl text-xl font-semibold uppercase tracking-[0.24em] text-stone-200">
+              Ride without compromise
+            </p>
+            <p className="mx-auto mt-5 max-w-xl text-sm leading-7 text-stone-300">
+              Premium used motorcycles, prepared with care, photographed with honesty, and shown by appointment so every rider gets proper time.
+            </p>
+
+            <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+              <Link to="/home" className="group inline-flex w-full items-center justify-center gap-3 rounded-full bg-amber-300 px-8 py-4 text-sm font-black uppercase tracking-[0.18em] text-stone-950 shadow-2xl shadow-amber-900/30 transition hover:bg-amber-200 sm:w-auto">
+                Enter site <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+              </Link>
+              <Link to="/bikes" className="inline-flex w-full items-center justify-center gap-3 rounded-full border border-white/30 bg-stone-950/35 px-8 py-4 text-sm font-black uppercase tracking-[0.18em] text-white backdrop-blur-md transition hover:border-amber-300 sm:w-auto">
+                View stock
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t border-white/10 bg-stone-950/35 px-4 py-5 backdrop-blur-md">
+          <div className="mx-auto grid max-w-5xl gap-3 text-center sm:grid-cols-4">
+            <SplashMetric value="16" label="Bikes migrated" />
+            <SplashMetric value="142" label="Original photos" />
+            <SplashMetric value="30 day" label="Warranty support" />
+            <SplashMetric value="UK" label="Delivery available" />
+          </div>
+        </div>
+      </div>
+    </main>
+  )
+}
+
+function SplashMetric({ value, label }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-stone-950/35 px-4 py-3">
+      <p className="text-lg font-black uppercase text-amber-200">{value}</p>
+      <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.22em] text-stone-300">{label}</p>
+    </div>
+  )
+}
+
 function HomePage() {
   const featured = availableBikes().slice(0, 6)
-  const [activeHeroVideo, setActiveHeroVideo] = useState(0)
 
   return (
     <main>
       <section className="relative overflow-hidden border-b border-stone-800">
-        <div className="absolute inset-0 bg-stone-950">
-          <video
-            key={heroVideos[activeHeroVideo]}
-            className="h-full w-full object-cover opacity-45"
-            autoPlay
-            muted
-            playsInline
-            poster={bikes[0].images[0]}
-            aria-hidden="true"
-            onEnded={() => setActiveHeroVideo((index) => (index + 1) % heroVideos.length)}
-          >
-            <source src={heroVideos[activeHeroVideo]} type="video/mp4" />
-          </video>
-          <div className="absolute inset-0 bg-gradient-to-r from-stone-950 via-stone-950/88 to-stone-950/35" />
-          <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-transparent to-stone-950/45" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(245,158,11,0.28),transparent_34%),radial-gradient(circle_at_78%_12%,rgba(255,255,255,0.10),transparent_28%)]" />
+        <div className="absolute inset-0">
+          <img src={bikes[0].images[0]} alt="Knights Motorcycles showroom bike" className="h-full w-full object-cover opacity-28" />
+          <div className="absolute inset-0 bg-gradient-to-r from-stone-950 via-stone-950/90 to-stone-950/35" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(245,158,11,0.22),transparent_32%),radial-gradient(circle_at_80%_10%,rgba(255,255,255,0.08),transparent_26%)]" />
         </div>
 
-        <div className="relative mx-auto grid min-h-[760px] max-w-7xl items-center gap-10 px-4 py-16 lg:grid-cols-[1.1fr_0.9fr]">
+        <div className="relative mx-auto grid min-h-[680px] max-w-7xl items-center gap-10 px-4 py-16 lg:grid-cols-[1.1fr_0.9fr]">
           <div>
             <p className="inline-flex rounded-full border border-amber-300/40 bg-amber-300/10 px-4 py-2 text-xs font-black uppercase tracking-[0.24em] text-amber-200">
               Nationwide delivery available · Appointment viewing
