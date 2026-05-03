@@ -84,6 +84,14 @@ function soldBikes() {
   return bikes.filter((bike) => bike.status === 'SOLD')
 }
 
+function cleanDealerNotes(notes) {
+  return notes
+    .split('\nGallery')[0]
+    .split('\nConnected Pages')[0]
+    .replace(/\n'\s*$/g, '')
+    .trim()
+}
+
 function App() {
   return (
     <HashRouter>
@@ -212,8 +220,8 @@ function SplashPage() {
 
         <div className="border-t border-white/10 bg-stone-950/35 px-4 py-5 backdrop-blur-md">
           <div className="mx-auto grid max-w-5xl gap-3 text-center sm:grid-cols-4">
-            <SplashMetric value="16" label="Bikes migrated" />
-            <SplashMetric value="142" label="Original photos" />
+            <SplashMetric value="16" label="Motorcycles on display" />
+            <SplashMetric value="142" label="Vehicle photos" />
             <SplashMetric value="30 day" label="Warranty support" />
             <SplashMetric value="UK" label="Delivery available" />
           </div>
@@ -264,8 +272,8 @@ function HomePage() {
               </Link>
             </div>
             <div className="mt-10 grid max-w-2xl grid-cols-2 gap-3 sm:grid-cols-4">
-              <Stat value="16" label="Original stock migrated" />
-              <Stat value="142" label="Original bike photos archived" />
+              <Stat value="16" label="Motorcycles on display" />
+              <Stat value="142" label="Vehicle photos" />
               <Stat value="30+" label="Typical stock scale" />
               <Stat value="24/7" label="Customer enquiries" />
             </div>
@@ -273,7 +281,7 @@ function HomePage() {
 
           <div className="rounded-[2rem] border border-stone-700 bg-stone-950/80 p-4 shadow-2xl shadow-black/40">
             <div className="overflow-hidden rounded-[1.5rem] bg-stone-900">
-              <img src={featured[0].images[0]} alt={featured[0].title} className="h-80 w-full object-cover" />
+              <img src={featured[0].images[0]} alt={featured[0].title} className="h-80 w-full object-contain p-3" />
             </div>
             <div className="p-5">
               <p className="text-xs font-black uppercase tracking-[0.24em] text-amber-300">Featured arrival</p>
@@ -325,7 +333,7 @@ function TrustStrip() {
 function FeaturedStock({ bikes: featured }) {
   return (
     <section className="px-4 py-20">
-      <SectionHeading eyebrow="Current stock" title="Original inventory, rebuilt for confident browsing" text="Every motorcycle found on the original Knights site has been migrated into the upgraded version, including sold examples for credibility and stock history." />
+      <SectionHeading eyebrow="Current stock" title="A complete showroom-style stock list" text="Browse the motorcycles currently presented by Knights, with clear pricing, vehicle photos, availability, specifications and confidence-building preparation notes." />
       <div className="mx-auto mt-10 grid max-w-7xl gap-6 md:grid-cols-2 xl:grid-cols-3">
         {featured.map((bike) => <BikeCard key={bike.slug} bike={bike} />)}
       </div>
@@ -372,7 +380,7 @@ function ServicesSection() {
 
   return (
     <section className="px-4 py-20">
-      <SectionHeading eyebrow="Services" title="Everything the original site promised, made easier to act on" text="The upgraded structure turns long service paragraphs into clear buyer actions while preserving the original HPI, PDI, warranty, delivery and part-exchange promises." />
+      <SectionHeading eyebrow="Services" title="Everything you need before choosing your next motorcycle" text="HPI checks, PDI preparation, warranty support, UK delivery, part exchange and direct purchase options are presented clearly so buyers know exactly what to do next." />
       <div className="mx-auto mt-10 grid max-w-7xl gap-5 md:grid-cols-2 lg:grid-cols-4">
         {cards.map(([title, text, link, Icon]) => (
           <Link key={title} to={link} className="group rounded-[1.75rem] border border-stone-700 bg-stone-900/60 p-6 transition hover:-translate-y-1 hover:border-amber-300/60">
@@ -404,7 +412,7 @@ function InventoryPage() {
   return (
     <main className="px-4 py-14">
       <div className="mx-auto max-w-7xl">
-        <SectionHeading eyebrow="For sale" title="All used bikes" text={`${availableBikes().length} available bikes and ${soldBikes().length} sold examples migrated from the original website.`} align="left" />
+        <SectionHeading eyebrow="For sale" title="All used bikes" text={`${availableBikes().length} motorcycles currently available and ${soldBikes().length} recently sold examples.`} align="left" />
         <div className="mt-8 grid gap-4 rounded-[1.5rem] border border-stone-700 bg-stone-900/50 p-4 md:grid-cols-[1fr_auto]">
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search Yamaha, Honda, 125cc, ABS..." className="rounded-full border border-stone-700 bg-stone-950 px-5 py-3 text-sm text-white outline-none focus:border-amber-300" />
           <div className="flex gap-2">
@@ -428,7 +436,7 @@ function BikeCard({ bike }) {
   return (
     <Link to={`/bikes/${bike.slug}`} className="group overflow-hidden rounded-[1.6rem] border border-stone-700 bg-stone-900/60 transition hover:-translate-y-1 hover:border-amber-300/50 hover:shadow-2xl hover:shadow-black/30">
       <div className="relative aspect-[4/3] overflow-hidden bg-stone-950">
-        <img src={bike.images[0]} alt={bike.title} className="h-full w-full object-cover transition duration-700 group-hover:scale-105" loading="lazy" />
+        <img src={bike.images[0]} alt={bike.title} className="h-full w-full object-contain p-3 transition duration-700 group-hover:scale-[1.02]" loading="lazy" />
         <div className="absolute left-4 top-4 flex gap-2">
           <span className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wider ${sold ? 'bg-stone-100 text-stone-950' : 'bg-emerald-400 text-stone-950'}`}>{bike.status}</span>
           <span className="rounded-full bg-stone-950/80 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-amber-200">{bike.engine}</span>
@@ -474,7 +482,7 @@ function BikeDetailPage() {
             <div className="mt-4 grid grid-cols-4 gap-3 md:grid-cols-6">
               {bike.images.map((image, index) => (
                 <button key={image} onClick={() => setActive(index)} className={`overflow-hidden rounded-xl border ${active === index ? 'border-amber-300' : 'border-stone-700'}`}>
-                  <img src={image} alt={`${bike.title} ${index + 1}`} className="aspect-square w-full object-cover" loading="lazy" />
+                  <img src={image} alt={`${bike.title} ${index + 1}`} className="aspect-square w-full object-contain bg-stone-950 p-1" loading="lazy" />
                 </button>
               ))}
             </div>
@@ -523,10 +531,10 @@ function BikeDetailPage() {
           </section>
 
           <section className="rounded-[2rem] border border-stone-700 bg-stone-900/60 p-7">
-            <h2 className="text-2xl font-black uppercase text-white">Original dealer notes, upgraded into a clearer story</h2>
-            <p className="mt-4 whitespace-pre-line text-sm leading-7 text-stone-300">{bike.originalNotes}</p>
+            <h2 className="text-2xl font-black uppercase text-white">Dealer notes and rider story</h2>
+            <p className="mt-4 whitespace-pre-line text-sm leading-7 text-stone-300">{cleanDealerNotes(bike.originalNotes)}</p>
             <a href={bike.sourceUrl} target="_blank" rel="noreferrer" className="mt-6 inline-flex items-center gap-2 text-sm font-black uppercase tracking-wider text-amber-200">
-              View original listing source <ArrowRight className="h-4 w-4" />
+              View detailed listing notes <ArrowRight className="h-4 w-4" />
             </a>
           </section>
         </div>
@@ -540,7 +548,7 @@ function SellPage() {
     <main className="px-4 py-14">
       <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.8fr_1.2fr]">
         <div>
-          <SectionHeading align="left" eyebrow="We buy motorcycles" title="Sell, part exchange, or get a fair market conversation started" text="The original site promised instant cash purchase. This upgraded version turns that promise into a clear valuation journey for motorcycles and part exchange buyers." />
+          <SectionHeading align="left" eyebrow="We buy motorcycles" title="Sell, part exchange, or start a fair valuation conversation" text="Knights offers direct purchase and part exchange conversations for riders who want a straightforward route without listing the bike themselves." />
           <div className="mt-8 space-y-4">
             {['Enter registration and mileage', 'Tell us the condition and service history', 'Receive a fair valuation conversation', 'Arrange viewing, collection or part exchange'].map((step, index) => (
               <div key={step} className="flex gap-4 rounded-2xl border border-stone-700 bg-stone-900/60 p-5">
@@ -560,7 +568,7 @@ function FinancePage() {
   return (
     <main className="px-4 py-14">
       <div className="mx-auto max-w-7xl">
-        <SectionHeading eyebrow="Finance" title="Make the next bike feel possible before the viewing" text="Finance is presented as an enquiry route first, keeping the site credible while avoiding premature FCA/payment complexity until the client confirms their finance partner." />
+        <SectionHeading eyebrow="Finance" title="Make the next bike feel possible before the viewing" text="Explore a representative monthly payment example and send a finance enquiry before arranging your appointment." />
         <div className="mt-10 grid gap-8 lg:grid-cols-2">
           <div className="rounded-[2rem] border border-stone-700 bg-stone-900/60 p-7">
             <h2 className="text-2xl font-black uppercase text-white">Representative example</h2>
@@ -609,7 +617,7 @@ function AboutPage() {
   return (
     <main className="px-4 py-14">
       <div className="mx-auto max-w-7xl">
-        <SectionHeading eyebrow="About Knights" title="A dealership story built around preparation, trust and the rider’s next chapter" text="The original website’s service promises are preserved here, then rewritten into a warmer brand story that gives both the seller and buyer a clearer identity." />
+        <SectionHeading eyebrow="About Knights" title="A dealership story built around preparation, trust and the rider’s next chapter" text="Knights brings together careful motorcycle preparation, clear paperwork, patient appointments and a rider-first buying experience." />
         <div className="mt-12 grid gap-8 lg:grid-cols-2">
           <StoryPanel title="Who Knights is" paragraphs={serviceCopy.about} />
           <StoryPanel title="Why riders remember the buying experience" paragraphs={serviceCopy.story} />
@@ -625,7 +633,7 @@ function LegalPage() {
   const { type } = useParams()
   const pages = {
     privacy: ['Privacy Policy', 'Knights Motorcycles collects contact details, vehicle enquiry information and valuation details only for responding to customer requests, arranging appointments and supporting transactions. Customers can request access, correction or deletion of their personal data.'],
-    cookies: ['Cookie Policy', 'The upgraded site should use essential cookies for functionality and optional analytics cookies only after consent. A cookie banner should be added before formal launch.'],
+    cookies: ['Cookie Policy', 'This website uses essential cookies for core functionality and may use optional analytics cookies to understand visitor behaviour. Optional cookies should only be used with visitor consent.'],
     terms: ['Terms & Conditions', 'Vehicle information is provided in good faith and should be confirmed during appointment viewing. Warranty, reserve, finance and delivery terms must be confirmed in writing before transaction completion.'],
   }
   const [title, text] = pages[type] || pages.privacy
@@ -635,7 +643,7 @@ function LegalPage() {
         <p className="text-xs font-black uppercase tracking-[0.28em] text-amber-300">Legal</p>
         <h1 className="mt-3 text-4xl font-black uppercase text-white">{title}</h1>
         <p className="mt-6 text-base leading-8 text-stone-300">{text}</p>
-        <p className="mt-6 text-sm leading-7 text-stone-400">This page has been upgraded from placeholder copy, but final legal wording should be reviewed before production launch.</p>
+        <p className="mt-6 text-sm leading-7 text-stone-400">For any questions about privacy, cookies or terms, please contact Knights Motorcycles directly before arranging a viewing or purchase.</p>
       </div>
     </main>
   )
@@ -674,10 +682,10 @@ function LeadForm({ title, type }) {
       </div>
       <label className="mt-5 flex gap-3 text-xs leading-5 text-stone-400">
         <input required type="checkbox" className="mt-1" />
-        I agree to be contacted about this enquiry. Final GDPR wording should be reviewed before production launch.
+        I agree to be contacted by Knights Motorcycles about this enquiry.
       </label>
       <button className="mt-6 inline-flex items-center gap-3 rounded-full bg-amber-300 px-7 py-4 text-sm font-black uppercase tracking-wider text-stone-950" type="submit">
-        Prepare email enquiry <ArrowRight className="h-4 w-4" />
+        Send enquiry <ArrowRight className="h-4 w-4" />
       </button>
       {sent && <p className="mt-4 text-sm text-emerald-300">Your email client should now open with the enquiry details prepared.</p>}
     </form>
