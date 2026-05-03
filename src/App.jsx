@@ -1,4 +1,4 @@
-import { HashRouter, Link, NavLink, Route, Routes, useParams } from 'react-router-dom'
+import { HashRouter, Link, NavLink, Route, Routes, useLocation, useParams } from 'react-router-dom'
 import {
   ArrowRight,
   BadgeCheck,
@@ -19,7 +19,7 @@ import {
   Wrench,
   X,
 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { bikes, company, serviceCopy } from './data/siteContent'
 
 const navItems = [
@@ -92,6 +92,7 @@ function cleanDealerNotes(notes) {
 function App() {
   return (
     <HashRouter>
+      <ScrollToTop />
       <div className="min-h-screen bg-stone-950 text-stone-50 selection:bg-amber-400 selection:text-stone-950">
         <SiteChrome />
         <Routes>
@@ -109,6 +110,17 @@ function App() {
       </div>
     </HashRouter>
   )
+}
+
+
+function ScrollToTop() {
+  const { pathname, hash } = useLocation()
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+  }, [pathname, hash])
+
+  return null
 }
 
 function SiteChrome() {
