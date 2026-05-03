@@ -54,6 +54,45 @@ const preparationChecklist = [
   'Throttle operation, idle and basic running condition verified',
 ]
 
+const originalStoryImages = [
+  {
+    src: '/images/workshop.webp',
+    title: 'Workshop preparation',
+    label: 'Workshop',
+    text: 'A proper handover starts before the viewing: checks, fluids and running condition are reviewed so each bike is presented with care.',
+  },
+  {
+    src: '/images/showroom.jpg',
+    title: 'Trackside inspection mindset',
+    label: 'Preparation',
+    text: 'The original site included behind-the-scenes motorcycle preparation imagery; the upgraded page now preserves that practical, mechanical credibility.',
+  },
+  {
+    src: '/images/hero-beach.jpeg',
+    title: 'Rider community',
+    label: 'Community',
+    text: 'Knights is not only about listings. The brand belongs around riders, meetups and the culture that makes the next bike feel exciting.',
+  },
+  {
+    src: '/images/hero-track.jpeg',
+    title: 'Performance inspiration',
+    label: 'Riding',
+    text: 'Sport and track imagery keeps the site aspirational while the stock pages stay focused on real motorcycles available from Leeds.',
+  },
+  {
+    src: '/images/finance.jpg',
+    title: 'The next ride',
+    label: 'Journey',
+    text: 'Road and touring photography supports the customer story: commuting, weekend rides and stepping up to the machine they have been saving for.',
+  },
+  {
+    src: '/images/delivery.jpg',
+    title: 'Paperwork and handover',
+    label: 'Handover',
+    text: 'The buying journey finishes with clear documentation, appointment-led explanation and written details before the customer commits.',
+  },
+]
+
 function formatPrice(value) {
   if (!value) return 'POA'
   return new Intl.NumberFormat('en-GB', {
@@ -306,6 +345,7 @@ function HomePage() {
       <TrustStrip />
       <FeaturedStock bikes={featured} />
       <BrandStory />
+      <OriginalImageStory />
       <ServicesSection />
       <CallToAction />
     </main>
@@ -371,6 +411,38 @@ function BrandStory() {
               </div>
             ))}
           </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function OriginalImageStory() {
+  return (
+    <section className="overflow-hidden border-y border-stone-800 bg-stone-950 px-4 py-20">
+      <div className="mx-auto max-w-7xl">
+        <div className="grid gap-10 lg:grid-cols-[0.82fr_1.18fr] lg:items-end">
+          <SectionHeading align="left" eyebrow="Original site imagery" title="Workshop, handover and riding culture restored" text="The original Knights site used more than bike listing photos. This upgraded section brings back the workshop, preparation, rider community, road and paperwork imagery so the brand story feels complete rather than reduced to stock cards." />
+          <div className="rounded-[2rem] border border-amber-300/20 bg-amber-300/10 p-6 text-sm leading-7 text-amber-50">
+            <p className="font-bold text-amber-100">More than stock photos</p>
+            <p className="mt-2 text-stone-200">The workshop, handover and riding images give buyers a clearer sense of how Knights prepares, explains and supports each motorcycle before it leaves Leeds.</p>
+          </div>
+        </div>
+
+        <div className="mt-12 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {originalStoryImages.map((image) => (
+            <article key={image.src} className="group overflow-hidden rounded-[1.75rem] border border-stone-700 bg-stone-900/60">
+              <div className="relative aspect-[4/3] overflow-hidden bg-stone-900">
+                <img src={image.src} alt={image.title} className="h-full w-full object-cover transition duration-700 group-hover:scale-105" loading="lazy" />
+                <div className="absolute inset-0 bg-gradient-to-t from-stone-950/90 via-stone-950/10 to-transparent" />
+                <span className="absolute left-4 top-4 rounded-full bg-stone-950/75 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-amber-200 ring-1 ring-amber-300/25">{image.label}</span>
+              </div>
+              <div className="p-6">
+                <h3 className="text-2xl font-black uppercase tracking-tight text-white">{image.title}</h3>
+                <p className="mt-3 text-sm leading-7 text-stone-400">{image.text}</p>
+              </div>
+            </article>
+          ))}
         </div>
       </div>
     </section>
