@@ -30,6 +30,11 @@ const navItems = [
   ['Contact', '/contact'],
 ]
 
+const heroVideos = [
+  '/videos/hero-track-gold-01.mp4',
+  '/videos/hero-track-gold-02.mp4',
+]
+
 const trustBadges = [
   ['HPI Checked', 'History reviewed before sale', ShieldCheck],
   ['30-Day Warranty', 'Standard cover included', BadgeCheck],
@@ -159,21 +164,23 @@ function SiteChrome() {
 
 function HomePage() {
   const featured = availableBikes().slice(0, 6)
+  const [activeHeroVideo, setActiveHeroVideo] = useState(0)
 
   return (
     <main>
       <section className="relative overflow-hidden border-b border-stone-800">
         <div className="absolute inset-0 bg-stone-950">
           <video
+            key={heroVideos[activeHeroVideo]}
             className="h-full w-full object-cover opacity-45"
             autoPlay
             muted
-            loop
             playsInline
             poster={bikes[0].images[0]}
             aria-hidden="true"
+            onEnded={() => setActiveHeroVideo((index) => (index + 1) % heroVideos.length)}
           >
-            <source src="/videos/hero-video.mp4" type="video/mp4" />
+            <source src={heroVideos[activeHeroVideo]} type="video/mp4" />
           </video>
           <div className="absolute inset-0 bg-gradient-to-r from-stone-950 via-stone-950/88 to-stone-950/35" />
           <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-transparent to-stone-950/45" />
