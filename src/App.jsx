@@ -163,13 +163,24 @@ function HomePage() {
   return (
     <main>
       <section className="relative overflow-hidden border-b border-stone-800">
-        <div className="absolute inset-0">
-          <img src={bikes[0].images[0]} alt="Knights Motorcycles showroom bike" className="h-full w-full object-cover opacity-30" />
-          <div className="absolute inset-0 bg-gradient-to-r from-stone-950 via-stone-950/90 to-stone-950/30" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(245,158,11,0.22),transparent_32%),radial-gradient(circle_at_80%_10%,rgba(255,255,255,0.08),transparent_26%)]" />
+        <div className="absolute inset-0 bg-stone-950">
+          <video
+            className="h-full w-full object-cover opacity-45"
+            autoPlay
+            muted
+            loop
+            playsInline
+            poster={bikes[0].images[0]}
+            aria-hidden="true"
+          >
+            <source src="/videos/hero-video.mp4" type="video/mp4" />
+          </video>
+          <div className="absolute inset-0 bg-gradient-to-r from-stone-950 via-stone-950/88 to-stone-950/35" />
+          <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-transparent to-stone-950/45" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(245,158,11,0.28),transparent_34%),radial-gradient(circle_at_78%_12%,rgba(255,255,255,0.10),transparent_28%)]" />
         </div>
 
-        <div className="relative mx-auto grid min-h-[720px] max-w-7xl items-center gap-10 px-4 py-16 lg:grid-cols-[1.1fr_0.9fr]">
+        <div className="relative mx-auto grid min-h-[760px] max-w-7xl items-center gap-10 px-4 py-16 lg:grid-cols-[1.1fr_0.9fr]">
           <div>
             <p className="inline-flex rounded-full border border-amber-300/40 bg-amber-300/10 px-4 py-2 text-xs font-black uppercase tracking-[0.24em] text-amber-200">
               Nationwide delivery available · Appointment viewing
