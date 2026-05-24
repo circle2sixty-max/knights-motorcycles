@@ -130,7 +130,7 @@ export default function AdminPage({ content, onContentUpdate }) {
   const [selectedSlug, setSelectedSlug] = useState(draft.bikes?.[0]?.slug || '')
   const [password, setPassword] = useState('')
   const [authenticated, setAuthenticated] = useState(false)
-  const [localMode, setLocalMode] = useState(Boolean(loadLocalDraft()))
+  const [localMode, setLocalMode] = useState(false)
   const [stockFilter, setStockFilter] = useState('ALL')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
@@ -152,25 +152,27 @@ export default function AdminPage({ content, onContentUpdate }) {
     event.preventDefault()
     setError('')
     setMessage('')
+    if (password === DEMO_ADMIN_PASSWORD) {
+      setAuthenticated(true)
+      setLocalMode(true)
+      setMessage('Demo login active. This Render preview saves edits in this browser so the owner can review the admin workflow.')
+      return
+    }
+
     try {
       await loginToCms(password)
       setAuthenticated(true)
       setLocalMode(false)
       setMessage('Logged in. Changes can now be published to the live CMS data file.')
     } catch (loginError) {
-      if (password === DEMO_ADMIN_PASSWORD) {
-        setAuthenticated(true)
-        setLocalMode(true)
-        setMessage('Demo login active. This Render preview saves edits in this browser so the owner can review the admin workflow.')
-        return
-      }
-      setError(loginError.message)
+      setError(loginError.message === 'Invalid password' ? 'Password incorrect.' : 'Password incorrect.')
     }
   }
 
   async function handleLogout() {
     await logoutFromCms()
     setAuthenticated(false)
+    setLocalMode(false)
     setPassword('')
     setMessage('Logged out.')
   }
@@ -355,21 +357,19 @@ export default function AdminPage({ content, onContentUpdate }) {
         <form onSubmit={handleLogin} className="mx-auto max-w-md rounded-[1.5rem] border border-stone-700 bg-stone-900/70 p-7">
           <Lock className="h-8 w-8 text-amber-300" />
           <h1 className="mt-5 text-3xl font-black uppercase text-white">Admin login</h1>
-          <p className="mt-3 text-sm leading-6 text-stone-400">Use the CMS password configured on the server. For this Render review, the demo password opens a browser-based review mode if publishing is not enabled yet.</p>
+          <p className="mt-3 text-sm leading-6 text-stone-400">Enter the review password to open the CMS preview.</p>
           <label className="mt-6 block text-xs font-black uppercase tracking-wider text-stone-300">Password</label>
           <input
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             type="password"
             className="mt-2 w-full rounded-2xl border border-stone-700 bg-stone-950 px-4 py-3 text-sm text-white outline-none focus:border-amber-300"
-            autoComplete="current-password"
+            autoComplete="new-password"
+            name="knights-cms-review-password"
             required
           />
           <button type="submit" className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-amber-300 px-6 py-3 text-sm font-black uppercase tracking-wider text-stone-950">
             Login <ArrowRight className="h-4 w-4" />
-          </button>
-          <button type="button" onClick={() => setLocalMode(true)} className="mt-3 w-full rounded-full border border-stone-700 px-6 py-3 text-xs font-black uppercase tracking-wider text-stone-300 hover:border-amber-300">
-            Continue in local draft mode
           </button>
           <StatusMessage message={message} error={error} />
         </form>
