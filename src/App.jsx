@@ -116,6 +116,10 @@ function App() {
   const [content, setContent] = useState(() => loadLocalDraft() || defaultSiteContent)
 
   useEffect(() => {
+    if ((window.location.pathname === '/admin' || window.location.pathname === '/admin/') && !window.location.hash) {
+      window.history.replaceState(null, '', '/#/admin')
+    }
+
     let active = true
     fetchCmsContent()
       .then((cmsContent) => {
