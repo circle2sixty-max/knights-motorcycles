@@ -32,6 +32,8 @@ const tabs = [
   ['advanced', 'Advanced JSON', FileJson],
 ]
 
+const DEMO_ADMIN_PASSWORD = 'KnightsDemo2026!'
+
 function clone(value) {
   return JSON.parse(JSON.stringify(value))
 }
@@ -105,6 +107,12 @@ export default function AdminPage({ content, onContentUpdate }) {
       setLocalMode(false)
       setMessage('Logged in. Changes can now be published to the live CMS data file.')
     } catch (loginError) {
+      if (password === DEMO_ADMIN_PASSWORD) {
+        setAuthenticated(true)
+        setLocalMode(true)
+        setMessage('Demo login active. This Render preview saves edits in this browser so the owner can review the admin workflow.')
+        return
+      }
       setError(loginError.message)
     }
   }
@@ -178,6 +186,16 @@ export default function AdminPage({ content, onContentUpdate }) {
     const file = event.target.files?.[0]
     if (!file) return
     setError('')
+    if (localMode) {
+      const reader = new FileReader()
+      reader.onload = () => {
+        updateBike('images', [...(selectedBike.images || []), reader.result])
+        setMessage(`Added ${file.name} to this local review draft.`)
+      }
+      reader.onerror = () => setError('Unable to read the selected image.')
+      reader.readAsDataURL(file)
+      return
+    }
     try {
       const result = await uploadCmsImage(file)
       updateBike('images', [...(selectedBike.images || []), result.url])
@@ -254,7 +272,7 @@ export default function AdminPage({ content, onContentUpdate }) {
         <form onSubmit={handleLogin} className="mx-auto max-w-md rounded-[1.5rem] border border-stone-700 bg-stone-900/70 p-7">
           <Lock className="h-8 w-8 text-amber-300" />
           <h1 className="mt-5 text-3xl font-black uppercase text-white">Admin login</h1>
-          <p className="mt-3 text-sm leading-6 text-stone-400">Use the CMS password configured on the server. For Render review, use local draft mode if publishing is not enabled yet.</p>
+          <p className="mt-3 text-sm leading-6 text-stone-400">Use the CMS password configured on the server. For this Render review, the demo password opens a browser-based review mode if publishing is not enabled yet.</p>
           <label className="mt-6 block text-xs font-black uppercase tracking-wider text-stone-300">Password</label>
           <input
             value={password}
