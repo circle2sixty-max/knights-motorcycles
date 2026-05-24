@@ -3,7 +3,7 @@ services:
     name: knights-motorcycles
     runtime: node
     buildCommand: npm install && npm run build
-    startCommand: npx serve -s dist -l $PORT
+    startCommand: npm run start
     envVars:
       - key: NODE_VERSION
         value: 20

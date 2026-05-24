@@ -19,79 +19,29 @@ import {
   Wrench,
   X,
 } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
-import { bikes, company, serviceCopy } from './data/siteContent'
+import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import AdminPage from './AdminPage'
+import { fetchCmsContent, loadLocalDraft } from './cmsApi'
+import { siteContent as defaultSiteContent } from './data/siteContent'
 
-const navItems = [
-  ['Stock', '/bikes'],
-  ['Sell Your Bike', '/sell-your-bike'],
-  ['Finance', '/finance'],
-  ['About', '/about'],
-  ['Contact', '/contact'],
-]
+const iconMap = {
+  BadgeCheck,
+  CalendarDays,
+  CreditCard,
+  MapPin,
+  ShieldCheck,
+  Sparkles,
+  Truck,
+  Users,
+  Wallet,
+  Wrench,
+}
 
-const brandLogo = '/images/brand/knights-gold-logo.png'
+const SiteContentContext = createContext(defaultSiteContent)
 
-const heroVideo = '/videos/hero-background-loop.mp4'
-
-const trustBadges = [
-  ['HPI Checked', 'History reviewed before sale', ShieldCheck],
-  ['30-Day Warranty', 'Standard cover included', BadgeCheck],
-  ['PDI Prepared', 'Workshop inspection completed', Wrench],
-  ['UK Delivery', 'Nationwide delivery available', Truck],
-  ['Part Exchange', 'Fair valuations considered', Users],
-  ['Appointment Viewing', 'Focused time with each bike', CalendarDays],
-]
-
-const preparationChecklist = [
-  'Brake pads, discs, levels and operation checked',
-  'Chain and sprocket tension, wear and lubrication reviewed',
-  'Tyre tread depth, pressure and condition inspected',
-  'Lights, indicators, horn and dashboard functions tested',
-  'Steering head bearings, forks and suspension assessed',
-  'Oil change completed where required before handover',
-  'Brake fluid and coolant checked or topped up as needed',
-  'Throttle operation, idle and basic running condition verified',
-]
-
-const originalStoryImages = [
-  {
-    src: '/images/workshop.webp',
-    title: 'Workshop preparation',
-    label: 'Workshop',
-    text: 'A proper handover starts before the viewing: checks, fluids and running condition are reviewed so each bike is presented with care.',
-  },
-  {
-    src: '/images/showroom.jpg',
-    title: 'Trackside inspection mindset',
-    label: 'Preparation',
-    text: 'The original site included behind-the-scenes motorcycle preparation imagery; the upgraded page now preserves that practical, mechanical credibility.',
-  },
-  {
-    src: '/images/hero-beach.jpeg',
-    title: 'Rider community',
-    label: 'Community',
-    text: 'Knights is not only about listings. The brand belongs around riders, meetups and the culture that makes the next bike feel exciting.',
-  },
-  {
-    src: '/images/hero-track.jpeg',
-    title: 'Performance inspiration',
-    label: 'Riding',
-    text: 'Sport and track imagery keeps the site aspirational while the stock pages stay focused on real motorcycles available from Leeds.',
-  },
-  {
-    src: '/images/finance.jpg',
-    title: 'The next ride',
-    label: 'Journey',
-    text: 'Road and touring photography supports the customer story: commuting, weekend rides and stepping up to the machine they have been saving for.',
-  },
-  {
-    src: '/images/delivery.jpg',
-    title: 'Paperwork and handover',
-    label: 'Handover',
-    text: 'The buying journey finishes with clear documentation, appointment-led explanation and written details before the customer commits.',
-  },
-]
+function useSiteContent() {
+  return useContext(SiteContentContext)
+}
 
 function formatPrice(value) {
   if (!value) return 'POA'
@@ -112,12 +62,12 @@ function monthlyFrom(price) {
   return Math.max(49, Math.round(price / 48 + price * 0.011))
 }
 
-function availableBikes() {
-  return bikes.filter((bike) => bike.status !== 'SOLD')
+function availableBikes(bikeList) {
+  return bikeList.filter((bike) => bike.status !== 'SOLD')
 }
 
-function soldBikes() {
-  return bikes.filter((bike) => bike.status === 'SOLD')
+function soldBikes(bikeList) {
+  return bikeList.filter((bike) => bike.status === 'SOLD')
 }
 
 function cleanDealerNotes(notes) {
@@ -129,25 +79,46 @@ function cleanDealerNotes(notes) {
 }
 
 function App() {
+  const [content, setContent] = useState(() => loadLocalDraft() || defaultSiteContent)
+
+  useEffect(() => {
+    let active = true
+    fetchCmsContent()
+      .then((cmsContent) => {
+        if (active && cmsContent?.bikes?.length) {
+          setContent({ ...defaultSiteContent, ...cmsContent })
+        }
+      })
+      .catch(() => {
+        // The static default content keeps the site usable before the PHP CMS API is deployed.
+      })
+    return () => {
+      active = false
+    }
+  }, [])
+
   return (
-    <HashRouter>
-      <ScrollToTop />
-      <div className="min-h-screen bg-stone-950 text-stone-50 selection:bg-amber-400 selection:text-stone-950">
-        <SiteChrome />
-        <Routes>
-          <Route path="/" element={<SplashPage />} />
-          <Route path="/home" element={<HomePage />} />
-          <Route path="/bikes" element={<InventoryPage />} />
-          <Route path="/bikes/:slug" element={<BikeDetailPage />} />
-          <Route path="/sell-your-bike" element={<SellPage />} />
-          <Route path="/finance" element={<FinancePage />} />
-          <Route path="/contact" element={<ContactPage />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/legal/:type" element={<LegalPage />} />
-        </Routes>
-        <Footer />
-      </div>
-    </HashRouter>
+    <SiteContentContext.Provider value={content}>
+      <HashRouter>
+        <ScrollToTop />
+        <div className="min-h-screen bg-stone-950 text-stone-50 selection:bg-amber-400 selection:text-stone-950">
+          <SiteChrome />
+          <Routes>
+            <Route path="/" element={<SplashPage />} />
+            <Route path="/home" element={<HomePage />} />
+            <Route path="/bikes" element={<InventoryPage />} />
+            <Route path="/bikes/:slug" element={<BikeDetailPage />} />
+            <Route path="/sell-your-bike" element={<SellPage />} />
+            <Route path="/finance" element={<FinancePage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/legal/:type" element={<LegalPage />} />
+            <Route path="/admin" element={<AdminPage content={content} onContentUpdate={setContent} />} />
+          </Routes>
+          <Footer />
+        </div>
+      </HashRouter>
+    </SiteContentContext.Provider>
   )
 }
 
@@ -164,6 +135,8 @@ function ScrollToTop() {
 
 function SiteChrome() {
   const [open, setOpen] = useState(false)
+  const { assets, company, navItems } = useSiteContent()
+  const brandLogo = assets.brandLogo
 
   return (
     <header className="sticky top-0 z-50 border-b border-stone-800 bg-stone-950/90 backdrop-blur-xl">
@@ -219,6 +192,11 @@ function SiteChrome() {
 }
 
 function SplashPage() {
+  const { assets, bikes, splash } = useSiteContent()
+  const brandLogo = assets.brandLogo
+  const heroVideo = assets.heroVideo
+  const poster = bikes[0]?.images?.[0]
+
   return (
     <main className="relative min-h-[calc(100vh-76px)] overflow-hidden">
       <div className="absolute inset-0 bg-stone-950">
@@ -229,7 +207,7 @@ function SplashPage() {
           loop
           playsInline
           preload="auto"
-          poster={bikes[0].images[0]}
+          poster={poster}
           aria-hidden="true"
         >
           <source src={heroVideo} type="video/mp4" />
@@ -242,23 +220,23 @@ function SplashPage() {
         <div className="flex flex-1 items-center justify-center px-4 py-12">
           <div className="mx-auto max-w-5xl text-center">
             <img src={brandLogo} alt="Knights Motorcycles gold logo" className="mx-auto mb-8 h-28 w-28 rounded-full border border-amber-300/40 object-cover shadow-2xl shadow-amber-900/40" />
-            <p className="text-xs font-black uppercase tracking-[0.34em] text-amber-200">Leeds · HPI checked · appointment viewing</p>
+            <p className="text-xs font-black uppercase tracking-[0.34em] text-amber-200">{splash.eyebrow}</p>
             <h1 className="mt-6 text-5xl font-black uppercase leading-[0.86] tracking-[-0.06em] text-white drop-shadow-2xl sm:text-7xl md:text-8xl">
-              Knights Motorcycles
+              {splash.title}
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-xl font-semibold uppercase tracking-[0.24em] text-stone-200">
-              Ride without compromise
+              {splash.subtitle}
             </p>
             <p className="mx-auto mt-5 max-w-xl text-sm leading-7 text-stone-300">
-              Premium used motorcycles, prepared with care, photographed with honesty, and shown by appointment so every rider gets proper time.
+              {splash.text}
             </p>
 
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link to="/home" className="group inline-flex w-full items-center justify-center gap-3 rounded-full bg-amber-300 px-8 py-4 text-sm font-black uppercase tracking-[0.18em] text-stone-950 shadow-2xl shadow-amber-900/30 transition hover:bg-amber-200 sm:w-auto">
-                Enter site <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+                {splash.primaryCta} <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
               </Link>
               <Link to="/bikes" className="inline-flex w-full items-center justify-center gap-3 rounded-full border border-white/30 bg-stone-950/35 px-8 py-4 text-sm font-black uppercase tracking-[0.18em] text-white backdrop-blur-md transition hover:border-amber-300 sm:w-auto">
-                View stock
+                {splash.secondaryCta}
               </Link>
             </div>
           </div>
@@ -266,10 +244,7 @@ function SplashPage() {
 
         <div className="border-t border-white/10 bg-stone-950/35 px-4 py-5 backdrop-blur-md">
           <div className="mx-auto grid max-w-5xl gap-3 text-center sm:grid-cols-4">
-            <SplashMetric value="16" label="Motorcycles on display" />
-            <SplashMetric value="142" label="Vehicle photos" />
-            <SplashMetric value="30 day" label="Warranty support" />
-            <SplashMetric value="UK" label="Delivery available" />
+            {splash.metrics.map(([value, label]) => <SplashMetric key={label} value={value} label={label} />)}
           </div>
         </div>
       </div>
@@ -287,13 +262,15 @@ function SplashMetric({ value, label }) {
 }
 
 function HomePage() {
-  const featured = availableBikes().slice(0, 6)
+  const { bikes, home } = useSiteContent()
+  const featured = availableBikes(bikes).slice(0, 6)
+  const heroBike = featured[0] || bikes[0]
 
   return (
     <main>
       <section className="relative overflow-hidden border-b border-stone-800">
         <div className="absolute inset-0">
-          <img src={bikes[0].images[0]} alt="Knights Motorcycles showroom bike" className="h-full w-full object-cover opacity-28" />
+          <img src={heroBike?.images?.[0]} alt="Knights Motorcycles showroom bike" className="h-full w-full object-cover opacity-28" />
           <div className="absolute inset-0 bg-gradient-to-r from-stone-950 via-stone-950/90 to-stone-950/35" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(245,158,11,0.22),transparent_32%),radial-gradient(circle_at_80%_10%,rgba(255,255,255,0.08),transparent_26%)]" />
         </div>
@@ -301,44 +278,41 @@ function HomePage() {
         <div className="relative mx-auto grid min-h-[680px] max-w-7xl items-center gap-10 px-4 py-16 lg:grid-cols-[1.1fr_0.9fr]">
           <div>
             <p className="inline-flex rounded-full border border-amber-300/40 bg-amber-300/10 px-4 py-2 text-xs font-black uppercase tracking-[0.24em] text-amber-200">
-              Nationwide delivery available · Appointment viewing
+              {home.heroEyebrow}
             </p>
             <h1 className="mt-7 max-w-4xl text-5xl font-black uppercase leading-[0.92] tracking-tight text-white sm:text-7xl">
-              Quality used motorcycles in Leeds, prepared like they matter.
+              {home.heroTitle}
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-stone-300">
-              Knights Motorcycles helps riders choose with confidence: HPI checked stock, 30-day warranty support, careful PDI preparation, part exchange and UK delivery.
+              {home.heroText}
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link to="/bikes" className="inline-flex items-center justify-center gap-3 rounded-full bg-amber-300 px-7 py-4 text-sm font-black uppercase tracking-wider text-stone-950 transition hover:bg-amber-200">
-                View current stock <ArrowRight className="h-4 w-4" />
+                {home.primaryCta} <ArrowRight className="h-4 w-4" />
               </Link>
               <Link to="/sell-your-bike" className="inline-flex items-center justify-center gap-3 rounded-full border border-stone-600 bg-stone-950/60 px-7 py-4 text-sm font-black uppercase tracking-wider text-white transition hover:border-amber-300">
-                Sell or part exchange
+                {home.secondaryCta}
               </Link>
             </div>
             <div className="mt-10 grid max-w-2xl grid-cols-2 gap-3 sm:grid-cols-4">
-              <Stat value="16" label="Motorcycles on display" />
-              <Stat value="142" label="Vehicle photos" />
-              <Stat value="30+" label="Typical stock scale" />
-              <Stat value="24/7" label="Customer enquiries" />
+              {home.stats.map(([value, label]) => <Stat key={label} value={value} label={label} />)}
             </div>
           </div>
 
-          <div className="rounded-[2rem] border border-stone-700 bg-stone-950/80 p-4 shadow-2xl shadow-black/40">
+          {heroBike && <div className="rounded-[2rem] border border-stone-700 bg-stone-950/80 p-4 shadow-2xl shadow-black/40">
             <div className="overflow-hidden rounded-[1.5rem] bg-stone-900">
-              <img src={featured[0].images[0]} alt={featured[0].title} className="h-80 w-full object-contain p-3" />
+              <img src={heroBike.images[0]} alt={heroBike.title} className="h-80 w-full object-contain p-3" />
             </div>
             <div className="p-5">
-              <p className="text-xs font-black uppercase tracking-[0.24em] text-amber-300">Featured arrival</p>
-              <h2 className="mt-2 text-2xl font-black text-white">{featured[0].title}</h2>
-              <p className="mt-3 text-sm leading-6 text-stone-300">{featured[0].story}</p>
+              <p className="text-xs font-black uppercase tracking-[0.24em] text-amber-300">{home.featuredLabel}</p>
+              <h2 className="mt-2 text-2xl font-black text-white">{heroBike.title}</h2>
+              <p className="mt-3 text-sm leading-6 text-stone-300">{heroBike.story}</p>
               <div className="mt-5 flex items-center justify-between border-t border-stone-800 pt-5">
-                <span className="text-2xl font-black text-amber-200">{formatPrice(featured[0].price)}</span>
-                <Link to={`/bikes/${featured[0].slug}`} className="text-xs font-black uppercase tracking-wider text-white hover:text-amber-200">View bike</Link>
+                <span className="text-2xl font-black text-amber-200">{formatPrice(heroBike.price)}</span>
+                <Link to={`/bikes/${heroBike.slug}`} className="text-xs font-black uppercase tracking-wider text-white hover:text-amber-200">View bike</Link>
               </div>
             </div>
-          </div>
+          </div>}
         </div>
       </section>
 
@@ -362,31 +336,38 @@ function Stat({ value, label }) {
 }
 
 function TrustStrip() {
+  const { trustBadges } = useSiteContent()
+
   return (
     <section className="border-b border-stone-800 bg-stone-900/70 px-4 py-10">
       <div className="mx-auto grid max-w-7xl gap-4 sm:grid-cols-2 lg:grid-cols-6">
-        {trustBadges.map(([label, desc, Icon]) => (
+        {trustBadges.map(({ label, desc, icon }) => {
+          const Icon = iconMap[icon] || ShieldCheck
+          return (
           <div key={label} className="rounded-2xl border border-stone-700 bg-stone-950/50 p-4">
             <Icon className="h-5 w-5 text-amber-300" />
             <h3 className="mt-3 text-sm font-black uppercase tracking-wider text-white">{label}</h3>
             <p className="mt-1 text-xs leading-5 text-stone-400">{desc}</p>
           </div>
-        ))}
+          )
+        })}
       </div>
     </section>
   )
 }
 
 function FeaturedStock({ bikes: featured }) {
+  const { featuredStock, bikes } = useSiteContent()
+
   return (
     <section className="px-4 py-20">
-      <SectionHeading eyebrow="Current stock" title="A complete showroom-style stock list" text="Browse the motorcycles currently presented by Knights, with clear pricing, vehicle photos, availability, specifications and confidence-building preparation notes." />
+      <SectionHeading eyebrow={featuredStock.eyebrow} title={featuredStock.title} text={featuredStock.text} />
       <div className="mx-auto mt-10 grid max-w-7xl gap-6 md:grid-cols-2 xl:grid-cols-3">
         {featured.map((bike) => <BikeCard key={bike.slug} bike={bike} />)}
       </div>
       <div className="mt-10 text-center">
         <Link to="/bikes" className="inline-flex items-center gap-3 rounded-full border border-amber-300/40 px-7 py-4 text-sm font-black uppercase tracking-wider text-amber-200 transition hover:bg-amber-300 hover:text-stone-950">
-          Browse all 16 bikes <ArrowRight className="h-4 w-4" />
+          {featuredStock.cta || `Browse all ${bikes.length} bikes`} <ArrowRight className="h-4 w-4" />
         </Link>
       </div>
     </section>
@@ -394,17 +375,19 @@ function FeaturedStock({ bikes: featured }) {
 }
 
 function BrandStory() {
+  const { brandStory, serviceCopy } = useSiteContent()
+
   return (
     <section className="border-y border-stone-800 bg-stone-900/40 px-4 py-20">
       <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.9fr_1.1fr]">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.28em] text-amber-300">The Knights story</p>
-          <h2 className="mt-4 text-4xl font-black uppercase tracking-tight text-white sm:text-5xl">A used bike should come with a human story, not just a price tag.</h2>
+          <p className="text-xs font-black uppercase tracking-[0.28em] text-amber-300">{brandStory.eyebrow}</p>
+          <h2 className="mt-4 text-4xl font-black uppercase tracking-tight text-white sm:text-5xl">{brandStory.title}</h2>
         </div>
         <div className="space-y-5 text-base leading-8 text-stone-300">
           {serviceCopy.story.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
           <div className="grid gap-4 pt-4 sm:grid-cols-3">
-            {['First-bike confidence', 'Step-up performance', 'Straightforward selling'].map((item) => (
+            {brandStory.highlights.map((item) => (
               <div key={item} className="rounded-2xl border border-stone-700 bg-stone-950/70 p-5">
                 <Sparkles className="h-5 w-5 text-amber-300" />
                 <p className="mt-3 text-sm font-black uppercase tracking-wider text-white">{item}</p>
@@ -418,14 +401,16 @@ function BrandStory() {
 }
 
 function OriginalImageStory() {
+  const { originalImageStory, originalStoryImages } = useSiteContent()
+
   return (
     <section className="overflow-hidden border-y border-stone-800 bg-stone-950 px-4 py-20">
       <div className="mx-auto max-w-7xl">
         <div className="grid gap-10 lg:grid-cols-[0.82fr_1.18fr] lg:items-end">
-          <SectionHeading align="left" eyebrow="Original site imagery" title="Workshop, handover and riding culture restored" text="The original Knights site used more than bike listing photos. This upgraded section brings back the workshop, preparation, rider community, road and paperwork imagery so the brand story feels complete rather than reduced to stock cards." />
+          <SectionHeading align="left" eyebrow={originalImageStory.eyebrow} title={originalImageStory.title} text={originalImageStory.text} />
           <div className="rounded-[2rem] border border-amber-300/20 bg-amber-300/10 p-6 text-sm leading-7 text-amber-50">
-            <p className="font-bold text-amber-100">More than stock photos</p>
-            <p className="mt-2 text-stone-200">The workshop, handover and riding images give buyers a clearer sense of how Knights prepares, explains and supports each motorcycle before it leaves Leeds.</p>
+            <p className="font-bold text-amber-100">{originalImageStory.noteTitle}</p>
+            <p className="mt-2 text-stone-200">{originalImageStory.noteText}</p>
           </div>
         </div>
 
@@ -450,18 +435,15 @@ function OriginalImageStory() {
 }
 
 function ServicesSection() {
-  const cards = [
-    ['Buy', 'Browse HPI checked used motorcycles prepared for viewing, delivery and confident handover.', '/bikes', ShieldCheck],
-    ['Sell', 'Request a fair valuation for cash purchase or part exchange without listing the bike yourself.', '/sell-your-bike', Wallet],
-    ['Finance', 'Explore representative monthly payments and enquire about finance options before visiting.', '/finance', CreditCard],
-    ['Visit', 'Book an appointment in Leeds so the team can give you proper time with the motorcycle.', '/contact', MapPin],
-  ]
+  const { services } = useSiteContent()
 
   return (
     <section className="px-4 py-20">
-      <SectionHeading eyebrow="Services" title="Everything you need before choosing your next motorcycle" text="HPI checks, PDI preparation, warranty support, UK delivery, part exchange and direct purchase options are presented clearly so buyers know exactly what to do next." />
+      <SectionHeading eyebrow={services.eyebrow} title={services.title} text={services.text} />
       <div className="mx-auto mt-10 grid max-w-7xl gap-5 md:grid-cols-2 lg:grid-cols-4">
-        {cards.map(([title, text, link, Icon]) => (
+        {services.cards.map(({ title, text, link, icon }) => {
+          const Icon = iconMap[icon] || ShieldCheck
+          return (
           <Link key={title} to={link} className="group rounded-[1.75rem] border border-stone-700 bg-stone-900/60 p-6 transition hover:-translate-y-1 hover:border-amber-300/60">
             <Icon className="h-8 w-8 text-amber-300" />
             <h3 className="mt-6 text-2xl font-black uppercase text-white">{title}</h3>
@@ -470,13 +452,15 @@ function ServicesSection() {
               Explore <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-1" />
             </span>
           </Link>
-        ))}
+          )
+        })}
       </div>
     </section>
   )
 }
 
 function InventoryPage() {
+  const { bikes, inventory } = useSiteContent()
   const [status, setStatus] = useState('ALL')
   const [query, setQuery] = useState('')
   const filtered = useMemo(() => {
@@ -486,14 +470,14 @@ function InventoryPage() {
       const queryMatch = !q || [bike.title, bike.make, bike.model, bike.engine, bike.style, bike.colour].join(' ').toLowerCase().includes(q)
       return statusMatch && queryMatch
     })
-  }, [query, status])
+  }, [bikes, query, status])
 
   return (
     <main className="px-4 py-14">
       <div className="mx-auto max-w-7xl">
-        <SectionHeading eyebrow="For sale" title="All used bikes" text={`${availableBikes().length} motorcycles currently available and ${soldBikes().length} recently sold examples.`} align="left" />
+        <SectionHeading eyebrow={inventory.eyebrow} title={inventory.title} text={`${availableBikes(bikes).length} motorcycles currently available and ${soldBikes(bikes).length} recently sold examples.`} align="left" />
         <div className="mt-8 grid gap-4 rounded-[1.5rem] border border-stone-700 bg-stone-900/50 p-4 md:grid-cols-[1fr_auto]">
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search Yamaha, Honda, 125cc, ABS..." className="rounded-full border border-stone-700 bg-stone-950 px-5 py-3 text-sm text-white outline-none focus:border-amber-300" />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={inventory.searchPlaceholder} className="rounded-full border border-stone-700 bg-stone-950 px-5 py-3 text-sm text-white outline-none focus:border-amber-300" />
           <div className="flex gap-2">
             {['ALL', 'AVAILABLE', 'SOLD'].map((item) => (
               <button key={item} onClick={() => setStatus(item)} className={`rounded-full px-4 py-2 text-xs font-black uppercase tracking-wider ${status === item ? 'bg-amber-300 text-stone-950' : 'bg-stone-800 text-stone-300'}`}>
@@ -536,6 +520,7 @@ function BikeCard({ bike }) {
 }
 
 function BikeDetailPage() {
+  const { bikes, company, preparationChecklist } = useSiteContent()
   const { slug } = useParams()
   const bike = bikes.find((item) => item.slug === slug)
   const [active, setActive] = useState(0)
@@ -623,13 +608,15 @@ function BikeDetailPage() {
 }
 
 function SellPage() {
+  const { sell } = useSiteContent()
+
   return (
     <main className="px-4 py-14">
       <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.8fr_1.2fr]">
         <div>
-          <SectionHeading align="left" eyebrow="We buy motorcycles" title="Sell, part exchange, or start a fair valuation conversation" text="Knights offers direct purchase and part exchange conversations for riders who want a straightforward route without listing the bike themselves." />
+          <SectionHeading align="left" eyebrow={sell.eyebrow} title={sell.title} text={sell.text} />
           <div className="mt-8 space-y-4">
-            {['Enter registration and mileage', 'Tell us the condition and service history', 'Receive a fair valuation conversation', 'Arrange viewing, collection or part exchange'].map((step, index) => (
+            {sell.steps.map((step, index) => (
               <div key={step} className="flex gap-4 rounded-2xl border border-stone-700 bg-stone-900/60 p-5">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-300 text-sm font-black text-stone-950">{index + 1}</span>
                 <p className="text-sm font-bold text-stone-200">{step}</p>
@@ -644,24 +631,19 @@ function SellPage() {
 }
 
 function FinancePage() {
+  const { finance } = useSiteContent()
+
   return (
     <main className="px-4 py-14">
       <div className="mx-auto max-w-7xl">
-        <SectionHeading eyebrow="Finance" title="Make the next bike feel possible before the viewing" text="Explore a representative monthly payment example and send a finance enquiry before arranging your appointment." />
+        <SectionHeading eyebrow={finance.eyebrow} title={finance.title} text={finance.text} />
         <div className="mt-10 grid gap-8 lg:grid-cols-2">
           <div className="rounded-[2rem] border border-stone-700 bg-stone-900/60 p-7">
-            <h2 className="text-2xl font-black uppercase text-white">Representative example</h2>
+            <h2 className="text-2xl font-black uppercase text-white">{finance.exampleTitle}</h2>
             <div className="mt-6 grid gap-3">
-              {[
-                ['Cash price', '£3,000'],
-                ['Customer deposit', '£300'],
-                ['Amount of credit', '£2,700'],
-                ['Term', '48 months'],
-                ['Representative APR', '16.9%'],
-                ['Monthly payment', 'From approx. £79'],
-              ].map(([label, value]) => <DetailRow key={label} label={label} value={value} />)}
+              {finance.exampleRows.map(([label, value]) => <DetailRow key={label} label={label} value={value} />)}
             </div>
-            <p className="mt-5 text-xs leading-6 text-stone-400">Illustration only. Finance is subject to status, affordability and partner approval. Formal FCA wording must be confirmed before live finance applications are enabled.</p>
+            <p className="mt-5 text-xs leading-6 text-stone-400">{finance.disclaimer}</p>
           </div>
           <LeadForm type="finance" title="Finance enquiry" />
         </div>
@@ -671,11 +653,13 @@ function FinancePage() {
 }
 
 function ContactPage() {
+  const { company, contact } = useSiteContent()
+
   return (
     <main className="px-4 py-14">
       <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.9fr_1.1fr]">
         <div>
-          <SectionHeading align="left" eyebrow="Contact" title="Book time with the bike, not just a slot in a diary" text="Knights works by appointment so every buyer gets proper time for a walk-around, questions, paperwork and a calm viewing experience." />
+          <SectionHeading align="left" eyebrow={contact.eyebrow} title={contact.title} text={contact.text} />
           <div className="mt-8 grid gap-4">
             <ContactCard icon={Phone} label="Call or text" value={company.phone} href={company.phoneHref} />
             <ContactCard icon={Mail} label="Email" value={company.email} href={company.emailHref} />
@@ -683,7 +667,7 @@ function ContactPage() {
             <ContactCard icon={Clock} label="Hours" value={`${company.supportHours}. ${company.viewingHours}.`} />
           </div>
           <div className="mt-6 rounded-2xl border border-amber-300/25 bg-amber-300/10 p-5 text-sm leading-7 text-amber-50">
-            <strong className="text-amber-200">Viewing tip:</strong> while walk-ins are welcome where possible, booking an appointment gives the team time to prepare the motorcycle, walk you through the paperwork, and answer questions without pressure. Weekday mornings are usually the calmest time to view.
+            <strong className="text-amber-200">Viewing tip:</strong> {contact.tip}
           </div>
         </div>
         <LeadForm type="viewing" title="Book a viewing" />
@@ -693,15 +677,20 @@ function ContactPage() {
 }
 
 function AboutPage() {
+  const { aboutPage, serviceCopy } = useSiteContent()
+  const panelSources = {
+    about: serviceCopy.about,
+    story: serviceCopy.story,
+    standards: serviceCopy.standards,
+    'customerServices+commitment': serviceCopy.customerServices.concat(serviceCopy.commitment),
+  }
+
   return (
     <main className="px-4 py-14">
       <div className="mx-auto max-w-7xl">
-        <SectionHeading eyebrow="About Knights" title="A dealership story built around preparation, trust and the rider’s next chapter" text="Knights brings together careful motorcycle preparation, clear paperwork, patient appointments and a rider-first buying experience." />
+        <SectionHeading eyebrow={aboutPage.eyebrow} title={aboutPage.title} text={aboutPage.text} />
         <div className="mt-12 grid gap-8 lg:grid-cols-2">
-          <StoryPanel title="Who Knights is" paragraphs={serviceCopy.about} />
-          <StoryPanel title="Why riders remember the buying experience" paragraphs={serviceCopy.story} />
-          <StoryPanel title="Service standards" paragraphs={serviceCopy.standards} />
-          <StoryPanel title="Customer services" paragraphs={serviceCopy.customerServices.concat(serviceCopy.commitment)} />
+          {aboutPage.panels.map((panel) => <StoryPanel key={panel.title} title={panel.title} paragraphs={panelSources[panel.source] || []} />)}
         </div>
       </div>
     </main>
@@ -709,38 +698,30 @@ function AboutPage() {
 }
 
 function LegalPage() {
+  const { legal } = useSiteContent()
   const { type } = useParams()
-  const pages = {
-    privacy: ['Privacy Policy', 'Knights Motorcycles collects contact details, vehicle enquiry information and valuation details only for responding to customer requests, arranging appointments and supporting transactions. Customers can request access, correction or deletion of their personal data.'],
-    cookies: ['Cookie Policy', 'This website uses essential cookies for core functionality and may use optional analytics cookies to understand visitor behaviour. Optional cookies should only be used with visitor consent.'],
-    terms: ['Terms & Conditions', 'Vehicle information is provided in good faith and should be confirmed during appointment viewing. Warranty, reserve, finance and delivery terms must be confirmed in writing before transaction completion.'],
-  }
-  const [title, text] = pages[type] || pages.privacy
+  const page = legal[type] || legal.privacy
   return (
     <main className="px-4 py-14">
       <div className="mx-auto max-w-3xl rounded-[2rem] border border-stone-700 bg-stone-900/60 p-8">
         <p className="text-xs font-black uppercase tracking-[0.28em] text-amber-300">Legal</p>
-        <h1 className="mt-3 text-4xl font-black uppercase text-white">{title}</h1>
-        <p className="mt-6 text-base leading-8 text-stone-300">{text}</p>
-        <p className="mt-6 text-sm leading-7 text-stone-400">For any questions about privacy, cookies or terms, please contact Knights Motorcycles directly before arranging a viewing or purchase.</p>
+        <h1 className="mt-3 text-4xl font-black uppercase text-white">{page.title}</h1>
+        <p className="mt-6 text-base leading-8 text-stone-300">{page.text}</p>
+        <p className="mt-6 text-sm leading-7 text-stone-400">{legal.footerText}</p>
       </div>
     </main>
   )
 }
 
 function LeadForm({ title, type }) {
+  const { company, leadForms } = useSiteContent()
   const [sent, setSent] = useState(false)
-  const subjectMap = {
-    valuation: 'Bike valuation request',
-    finance: 'Finance enquiry',
-    viewing: 'Viewing appointment request',
-  }
 
   function handleSubmit(event) {
     event.preventDefault()
     const form = new FormData(event.currentTarget)
     const lines = Array.from(form.entries()).map(([key, value]) => `${key}: ${value}`)
-    window.location.href = `mailto:${company.email}?subject=${encodeURIComponent(subjectMap[type] || title)}&body=${encodeURIComponent(lines.join('\n'))}`
+    window.location.href = `mailto:${company.email}?subject=${encodeURIComponent(leadForms[type] || title)}&body=${encodeURIComponent(lines.join('\n'))}`
     setSent(true)
   }
 
@@ -772,12 +753,14 @@ function LeadForm({ title, type }) {
 }
 
 function Footer() {
+  const { company, footer } = useSiteContent()
+
   return (
     <footer className="border-t border-stone-800 bg-stone-950 px-4 py-12">
       <div className="mx-auto grid max-w-7xl gap-8 md:grid-cols-[1.2fr_0.8fr_0.8fr]">
         <div>
           <p className="text-xl font-black uppercase tracking-[0.22em] text-white">Knights Motorcycles</p>
-          <p className="mt-4 max-w-xl text-sm leading-7 text-stone-400">Premium used motorcycles in Leeds. HPI checked, PDI prepared, warranty supported and available by appointment.</p>
+          <p className="mt-4 max-w-xl text-sm leading-7 text-stone-400">{footer.text}</p>
         </div>
         <div>
           <p className="text-xs font-black uppercase tracking-wider text-amber-300">Contact</p>
@@ -871,15 +854,17 @@ function StoryPanel({ title, paragraphs }) {
 }
 
 function CallToAction() {
+  const { company, cta } = useSiteContent()
+
   return (
     <section className="px-4 pb-20">
       <div className="mx-auto max-w-5xl rounded-[2rem] border border-amber-300/30 bg-gradient-to-br from-amber-300/15 to-stone-900 p-8 text-center sm:p-12">
         <Star className="mx-auto h-8 w-8 text-amber-300" />
-        <h2 className="mt-5 text-4xl font-black uppercase tracking-tight text-white">Ready to choose your next ride?</h2>
-        <p className="mx-auto mt-4 max-w-2xl text-base leading-8 text-stone-300">Call, text, book a viewing or send an enquiry. Knights works by appointment so your bike gets proper attention before you buy.</p>
+        <h2 className="mt-5 text-4xl font-black uppercase tracking-tight text-white">{cta.title}</h2>
+        <p className="mx-auto mt-4 max-w-2xl text-base leading-8 text-stone-300">{cta.text}</p>
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
           <a href={company.phoneHref} className="inline-flex items-center justify-center gap-2 rounded-full bg-amber-300 px-7 py-4 text-sm font-black uppercase tracking-wider text-stone-950"><Phone className="h-4 w-4" /> Call {company.phone}</a>
-          <Link to="/contact" className="inline-flex items-center justify-center gap-2 rounded-full border border-stone-600 px-7 py-4 text-sm font-black uppercase tracking-wider text-white">Book viewing</Link>
+          <Link to="/contact" className="inline-flex items-center justify-center gap-2 rounded-full border border-stone-600 px-7 py-4 text-sm font-black uppercase tracking-wider text-white">{cta.secondary}</Link>
         </div>
       </div>
     </section>
