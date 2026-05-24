@@ -10,7 +10,7 @@ async function parseJsonResponse(response) {
   try {
     return JSON.parse(text)
   } catch {
-    throw new Error('Server did not return JSON. Check that the PHP API is deployed.')
+    throw new Error('Server did not return JSON. Check that the CMS API is deployed.')
   }
 }
 

@@ -90,7 +90,7 @@ Recommended approach for the existing `knights-motorcycles.co.uk` domain:
 
 2. Back up the existing Fasthosts website files before replacing anything.
 3. Upload the full contents of `dist/` to the website root for `knights-motorcycles.co.uk`.
-4. Copy `dist/api/config.example.php` to `dist/api/config.php` before upload, or create `api/config.php` on the server.
+4. Copy `deployment/fasthosts-api/api/` into the live website root as `/api/`, then copy `api/config.example.php` to `api/config.php`.
 5. Generate an admin password hash:
 
    ```bash

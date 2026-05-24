@@ -123,7 +123,7 @@ export default function AdminPage({ content, onContentUpdate }) {
     if (localMode) {
       saveLocalDraft(nextContent)
       onContentUpdate(nextContent)
-      setMessage('Saved as a local browser draft. Deploy the PHP API to publish changes live.')
+      setMessage('Saved as a local browser draft. Deploy the CMS API to publish changes live.')
       return
     }
 
@@ -254,7 +254,7 @@ export default function AdminPage({ content, onContentUpdate }) {
         <form onSubmit={handleLogin} className="mx-auto max-w-md rounded-[1.5rem] border border-stone-700 bg-stone-900/70 p-7">
           <Lock className="h-8 w-8 text-amber-300" />
           <h1 className="mt-5 text-3xl font-black uppercase text-white">Admin login</h1>
-          <p className="mt-3 text-sm leading-6 text-stone-400">Use the CMS password configured on the Fasthosts PHP API.</p>
+          <p className="mt-3 text-sm leading-6 text-stone-400">Use the CMS password configured on the server. For Render review, use local draft mode if publishing is not enabled yet.</p>
           <label className="mt-6 block text-xs font-black uppercase tracking-wider text-stone-300">Password</label>
           <input
             value={password}
@@ -360,7 +360,7 @@ function StatusMessage({ message, error, localMode }) {
   if (!message && !error && !localMode) return null
   return (
     <div className="mb-6 grid gap-2">
-      {localMode && <p className="rounded-2xl border border-amber-300/25 bg-amber-300/10 px-4 py-3 text-sm text-amber-100">Local draft mode: changes stay in this browser until the PHP API is deployed and you publish them.</p>}
+      {localMode && <p className="rounded-2xl border border-amber-300/25 bg-amber-300/10 px-4 py-3 text-sm text-amber-100">Local draft mode: changes stay in this browser until the CMS API is enabled and you publish them.</p>}
       {message && <p className="rounded-2xl border border-emerald-300/25 bg-emerald-300/10 px-4 py-3 text-sm text-emerald-100">{message}</p>}
       {error && <p className="rounded-2xl border border-red-300/25 bg-red-400/10 px-4 py-3 text-sm text-red-100">{error}</p>}
     </div>
@@ -382,7 +382,7 @@ function OverviewPanel({ draft, stockCounts, onExport, onImport, onClearLocal })
             'Stock listings can be added, edited, sold or removed.',
             'Business contact details drive the phone, email and map links.',
             'Page copy, service cards, legal copy and story modules are editable.',
-            'Images can be uploaded once the PHP API is live on Fasthosts.',
+            'Images can be uploaded once the CMS API is live.',
           ].map((item) => (
             <p key={item} className="flex gap-3 text-sm leading-6 text-stone-300">
               <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-amber-300" /> {item}
