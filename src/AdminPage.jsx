@@ -131,6 +131,7 @@ export default function AdminPage({ content, onContentUpdate }) {
   const [password, setPassword] = useState('')
   const [authenticated, setAuthenticated] = useState(false)
   const [localMode, setLocalMode] = useState(Boolean(loadLocalDraft()))
+  const [stockFilter, setStockFilter] = useState('ALL')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
@@ -341,6 +342,13 @@ export default function AdminPage({ content, onContentUpdate }) {
     reader.readAsText(file)
   }
 
+  function openStockFilter(filter) {
+    const targetBikes = filter === 'ALL' ? draft.bikes : draft.bikes.filter((bike) => bike.status === filter)
+    setStockFilter(filter)
+    setSelectedSlug(targetBikes[0]?.slug || draft.bikes?.[0]?.slug || '')
+    setActiveTab('stock')
+  }
+
   if (!authenticated && !localMode) {
     return (
       <AdminShell title="Knights CMS" subtitle="Protected editing area for stock, company details and page modules.">
@@ -404,6 +412,7 @@ export default function AdminPage({ content, onContentUpdate }) {
           <OverviewPanel
             draft={draft}
             stockCounts={stockCounts}
+            onOpenStock={openStockFilter}
             onExport={() => downloadJson(normalizeContent(draft))}
             onImport={importJson}
             onClearLocal={() => {
@@ -418,6 +427,8 @@ export default function AdminPage({ content, onContentUpdate }) {
             bikes={draft.bikes || []}
             selectedBike={selectedBike}
             selectedSlug={selectedSlug}
+            stockFilter={stockFilter}
+            setStockFilter={setStockFilter}
             setSelectedSlug={setSelectedSlug}
             updateBike={updateBike}
             updateBikeNumber={updateBikeNumber}
@@ -460,15 +471,15 @@ function StatusMessage({ message, error, localMode }) {
   )
 }
 
-function OverviewPanel({ draft, stockCounts, onExport, onImport, onClearLocal }) {
+function OverviewPanel({ draft, stockCounts, onOpenStock, onExport, onImport, onClearLocal }) {
   return (
     <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
       <section className="rounded-[1.5rem] border border-stone-700 bg-stone-900/70 p-6">
         <h2 className="text-2xl font-black uppercase text-white">Publishing status</h2>
         <div className="mt-6 grid gap-3 sm:grid-cols-3">
-          <AdminStat value={stockCounts.total} label="Total bikes" />
-          <AdminStat value={stockCounts.available} label="Available" />
-          <AdminStat value={stockCounts.sold} label="Sold" />
+          <AdminStat value={stockCounts.total} label="Total bikes" onClick={() => onOpenStock('ALL')} />
+          <AdminStat value={stockCounts.available} label="Available" onClick={() => onOpenStock('AVAILABLE')} />
+          <AdminStat value={stockCounts.sold} label="Sold" onClick={() => onOpenStock('SOLD')} />
         </div>
         <div className="mt-6 grid gap-3">
           {[
@@ -507,16 +518,25 @@ function OverviewPanel({ draft, stockCounts, onExport, onImport, onClearLocal })
   )
 }
 
-function AdminStat({ value, label }) {
+function AdminStat({ value, label, onClick }) {
   return (
-    <div className="rounded-2xl border border-stone-700 bg-stone-950 p-4">
+    <button type="button" onClick={onClick} className="rounded-2xl border border-stone-700 bg-stone-950 p-4 text-left transition hover:-translate-y-0.5 hover:border-amber-300 focus:border-amber-300 focus:outline-none">
       <p className="text-3xl font-black text-amber-200">{value}</p>
       <p className="mt-1 text-[10px] font-black uppercase tracking-wider text-stone-500">{label}</p>
-    </div>
+      <p className="mt-3 text-[10px] font-black uppercase tracking-wider text-stone-400">Edit matching stock</p>
+    </button>
   )
 }
 
-function StockPanel({ bikes, selectedBike, selectedSlug, setSelectedSlug, updateBike, updateBikeNumber, updateBikeMedia, updateBikeSpecs, onUpload, addBike, removeBike }) {
+function StockPanel({ bikes, selectedBike, selectedSlug, stockFilter, setStockFilter, setSelectedSlug, updateBike, updateBikeNumber, updateBikeMedia, updateBikeSpecs, onUpload, addBike, removeBike }) {
+  const filteredBikes = stockFilter === 'ALL' ? bikes : bikes.filter((bike) => bike.status === stockFilter)
+
+  function handleFilterChange(filter) {
+    const targetBikes = filter === 'ALL' ? bikes : bikes.filter((bike) => bike.status === filter)
+    setStockFilter(filter)
+    setSelectedSlug(targetBikes[0]?.slug || bikes[0]?.slug || '')
+  }
+
   if (!selectedBike) {
     return (
       <section className="rounded-[1.5rem] border border-stone-700 bg-stone-900/70 p-6">
@@ -533,8 +553,20 @@ function StockPanel({ bikes, selectedBike, selectedSlug, setSelectedSlug, update
         <button onClick={addBike} className="mb-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-amber-300 px-5 py-3 text-xs font-black uppercase tracking-wider text-stone-950">
           <Plus className="h-4 w-4" /> Add bike
         </button>
+        <div className="mb-4 grid grid-cols-3 gap-2">
+          {['ALL', 'AVAILABLE', 'SOLD'].map((filter) => (
+            <button
+              key={filter}
+              type="button"
+              onClick={() => handleFilterChange(filter)}
+              className={`rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-wider ${stockFilter === filter ? 'bg-amber-300 text-stone-950' : 'bg-stone-950 text-stone-400'}`}
+            >
+              {filter}
+            </button>
+          ))}
+        </div>
         <div className="grid max-h-[760px] gap-2 overflow-auto pr-1">
-          {bikes.map((bike) => (
+          {filteredBikes.map((bike) => (
             <button
               key={bike.slug}
               onClick={() => setSelectedSlug(bike.slug)}
@@ -546,6 +578,9 @@ function StockPanel({ bikes, selectedBike, selectedSlug, setSelectedSlug, update
               <p className="mt-1 text-xs text-stone-500">{bike.status} · {bike.price ? `£${bike.price}` : 'POA'}</p>
             </button>
           ))}
+          {!filteredBikes.length && (
+            <p className="rounded-2xl border border-stone-700 bg-stone-950 p-4 text-xs leading-5 text-stone-400">No bikes match this status.</p>
+          )}
         </div>
       </aside>
 
