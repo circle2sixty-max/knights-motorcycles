@@ -62,6 +62,40 @@ function monthlyFrom(price) {
   return Math.max(49, Math.round(price / 48 + price * 0.011))
 }
 
+const videoExtensions = ['.mp4', '.webm', '.mov', '.m4v']
+
+function mediaTypeFromUrl(url = '', explicitType = '') {
+  if (explicitType === 'video' || explicitType === 'image') return explicitType
+  const lower = url.toLowerCase().split('?')[0]
+  if (url.startsWith('data:video/') || videoExtensions.some((ext) => lower.endsWith(ext))) return 'video'
+  return 'image'
+}
+
+function getBikeMedia(bike) {
+  const explicit = Array.isArray(bike?.media) ? bike.media : []
+  const fallback = Array.isArray(bike?.images) ? bike.images : []
+  return (explicit.length ? explicit : fallback)
+    .map((item, index) => {
+      const media = typeof item === 'string' ? { url: item } : item
+      return {
+        type: mediaTypeFromUrl(media?.url, media?.type),
+        url: media?.url || '',
+        label: media?.label || '',
+        order: Number.isFinite(media?.order) ? media.order : index,
+      }
+    })
+    .filter((item) => item.url)
+    .sort((a, b) => {
+      if (a.type !== b.type) return a.type === 'video' ? -1 : 1
+      return a.order - b.order
+    })
+}
+
+function getBikePoster(bike) {
+  const media = getBikeMedia(bike)
+  return media.find((item) => item.type === 'image')?.url || media[0]?.url || ''
+}
+
 function availableBikes(bikeList) {
   return bikeList.filter((bike) => bike.status !== 'SOLD')
 }
@@ -195,7 +229,7 @@ function SplashPage() {
   const { assets, bikes, splash } = useSiteContent()
   const brandLogo = assets.brandLogo
   const heroVideo = assets.heroVideo
-  const poster = bikes[0]?.images?.[0]
+  const poster = getBikePoster(bikes[0])
 
   return (
     <main className="relative min-h-[calc(100vh-76px)] overflow-hidden">
@@ -265,12 +299,13 @@ function HomePage() {
   const { bikes, home } = useSiteContent()
   const featured = availableBikes(bikes).slice(0, 6)
   const heroBike = featured[0] || bikes[0]
+  const heroPoster = getBikePoster(heroBike)
 
   return (
     <main>
       <section className="relative overflow-hidden border-b border-stone-800">
         <div className="absolute inset-0">
-          <img src={heroBike?.images?.[0]} alt="Knights Motorcycles showroom bike" className="h-full w-full object-cover opacity-28" />
+          <img src={heroPoster} alt="Knights Motorcycles showroom bike" className="h-full w-full object-cover opacity-28" />
           <div className="absolute inset-0 bg-gradient-to-r from-stone-950 via-stone-950/90 to-stone-950/35" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(245,158,11,0.22),transparent_32%),radial-gradient(circle_at_80%_10%,rgba(255,255,255,0.08),transparent_26%)]" />
         </div>
@@ -301,7 +336,7 @@ function HomePage() {
 
           {heroBike && <div className="rounded-[2rem] border border-stone-700 bg-stone-950/80 p-4 shadow-2xl shadow-black/40">
             <div className="overflow-hidden rounded-[1.5rem] bg-stone-900">
-              <img src={heroBike.images[0]} alt={heroBike.title} className="h-80 w-full object-contain p-3" />
+              <MediaDisplay media={getBikeMedia(heroBike)[0]} title={heroBike.title} className="h-80 w-full object-contain p-3" />
             </div>
             <div className="p-5">
               <p className="text-xs font-black uppercase tracking-[0.24em] text-amber-300">{home.featuredLabel}</p>
@@ -496,13 +531,15 @@ function InventoryPage() {
 
 function BikeCard({ bike }) {
   const sold = bike.status === 'SOLD'
+  const primaryMedia = getBikeMedia(bike)[0]
   return (
     <Link to={`/bikes/${bike.slug}`} className="group overflow-hidden rounded-[1.6rem] border border-stone-700 bg-stone-900/60 transition hover:-translate-y-1 hover:border-amber-300/50 hover:shadow-2xl hover:shadow-black/30">
       <div className="relative aspect-[4/3] overflow-hidden bg-stone-950">
-        <img src={bike.images[0]} alt={bike.title} className="h-full w-full object-contain p-3 transition duration-700 group-hover:scale-[1.02]" loading="lazy" />
+        <MediaDisplay media={primaryMedia} title={bike.title} className="h-full w-full object-contain p-3 transition duration-700 group-hover:scale-[1.02]" compact />
         <div className="absolute left-4 top-4 flex gap-2">
           <span className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wider ${sold ? 'bg-stone-100 text-stone-950' : 'bg-emerald-400 text-stone-950'}`}>{bike.status}</span>
           <span className="rounded-full bg-stone-950/80 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-amber-200">{bike.engine}</span>
+          {primaryMedia?.type === 'video' && <span className="rounded-full bg-sky-300 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-stone-950">Video</span>}
         </div>
         <div className="absolute bottom-4 right-4 rounded-full bg-stone-950/85 px-4 py-2 text-lg font-black text-amber-200">{formatPrice(bike.price)}</div>
       </div>
@@ -530,6 +567,8 @@ function BikeDetailPage() {
   }
 
   const finance = monthlyFrom(bike.price)
+  const media = getBikeMedia(bike)
+  const activeMedia = media[active] || media[0]
 
   return (
     <main className="px-4 py-12">
@@ -541,12 +580,13 @@ function BikeDetailPage() {
         <div className="mt-8 grid gap-10 lg:grid-cols-[1.1fr_0.9fr]">
           <div>
             <div className="overflow-hidden rounded-[2rem] border border-stone-700 bg-stone-900">
-              <img src={bike.images[active] || bike.images[0]} alt={bike.title} className="max-h-[680px] w-full object-contain" />
+              <MediaDisplay media={activeMedia} title={bike.title} className="max-h-[680px] w-full object-contain" controls />
             </div>
             <div className="mt-4 grid grid-cols-4 gap-3 md:grid-cols-6">
-              {bike.images.map((image, index) => (
-                <button key={image} onClick={() => setActive(index)} className={`overflow-hidden rounded-xl border ${active === index ? 'border-amber-300' : 'border-stone-700'}`}>
-                  <img src={image} alt={`${bike.title} ${index + 1}`} className="aspect-square w-full object-contain bg-stone-950 p-1" loading="lazy" />
+              {media.map((item, index) => (
+                <button key={`${item.url}-${index}`} onClick={() => setActive(index)} className={`relative overflow-hidden rounded-xl border ${active === index ? 'border-amber-300' : 'border-stone-700'}`}>
+                  <MediaDisplay media={item} title={`${bike.title} ${index + 1}`} className="aspect-square w-full object-contain bg-stone-950 p-1" compact />
+                  {item.type === 'video' && <span className="absolute bottom-1 left-1 rounded-full bg-sky-300 px-2 py-0.5 text-[9px] font-black uppercase text-stone-950">Video</span>}
                 </button>
               ))}
             </div>
@@ -605,6 +645,28 @@ function BikeDetailPage() {
       </div>
     </main>
   )
+}
+
+function MediaDisplay({ media, title, className, controls = false, compact = false }) {
+  if (!media?.url) {
+    return <div className={`flex items-center justify-center bg-stone-950 text-xs uppercase tracking-wider text-stone-500 ${className}`}>No media</div>
+  }
+
+  if (media.type === 'video') {
+    return (
+      <video
+        src={media.url}
+        className={className}
+        controls={controls}
+        muted={!controls}
+        loop={compact}
+        playsInline
+        preload="metadata"
+      />
+    )
+  }
+
+  return <img src={media.url} alt={media.label || title} className={className} loading="lazy" />
 }
 
 function SellPage() {

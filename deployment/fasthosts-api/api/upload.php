@@ -13,13 +13,14 @@ if (empty($_FILES['file']) || !is_uploaded_file($_FILES['file']['tmp_name'])) {
 }
 
 $file = $_FILES['file'];
-if (($file['size'] ?? 0) > 8 * 1024 * 1024) {
-  json_response(['error' => 'Image is too large. Maximum size is 8 MB.'], 400);
+if (($file['size'] ?? 0) > 100 * 1024 * 1024) {
+  json_response(['error' => 'File is too large. Maximum size is 100 MB.'], 400);
 }
 
-$imageInfo = getimagesize($file['tmp_name']);
-if ($imageInfo === false) {
-  json_response(['error' => 'Uploaded file is not a valid image'], 400);
+$finfo = finfo_open(FILEINFO_MIME_TYPE);
+$mime = $finfo ? finfo_file($finfo, $file['tmp_name']) : '';
+if ($finfo) {
+  finfo_close($finfo);
 }
 
 $mimeToExt = [
@@ -27,11 +28,14 @@ $mimeToExt = [
   'image/png' => 'png',
   'image/webp' => 'webp',
   'image/gif' => 'gif',
+  'video/mp4' => 'mp4',
+  'video/webm' => 'webm',
+  'video/quicktime' => 'mov',
+  'video/x-m4v' => 'm4v',
 ];
 
-$mime = $imageInfo['mime'] ?? '';
 if (!isset($mimeToExt[$mime])) {
-  json_response(['error' => 'Only JPG, PNG, WebP and GIF images are supported'], 400);
+  json_response(['error' => 'Only JPG, PNG, WebP, GIF, MP4, WebM, MOV and M4V files are supported'], 400);
 }
 
 $monthDir = gmdate('Y/m');
@@ -50,5 +54,6 @@ if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
 
 json_response([
   'ok' => true,
+  'type' => str_starts_with($mime, 'video/') ? 'video' : 'image',
   'url' => public_upload_url($filename),
 ]);

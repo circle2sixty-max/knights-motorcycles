@@ -1,10 +1,14 @@
 import { useMemo, useState } from 'react'
 import {
+  ArrowDown,
   ArrowRight,
+  ArrowUp,
   Bike,
   CheckCircle2,
   Database,
   FileJson,
+  Film,
+  Image as ImageIcon,
   ImagePlus,
   Lock,
   LogOut,
@@ -21,7 +25,7 @@ import {
   logoutFromCms,
   saveCmsContent,
   saveLocalDraft,
-  uploadCmsImage,
+  uploadCmsMedia,
 } from './cmsApi'
 
 const tabs = [
@@ -33,6 +37,52 @@ const tabs = [
 ]
 
 const DEMO_ADMIN_PASSWORD = 'KnightsDemo2026!'
+const videoExtensions = ['.mp4', '.webm', '.mov', '.m4v']
+
+function mediaTypeFromUrl(url = '', explicitType = '') {
+  if (explicitType === 'video' || explicitType === 'image') return explicitType
+  const lower = url.toLowerCase().split('?')[0]
+  if (url.startsWith('data:video/') || videoExtensions.some((ext) => lower.endsWith(ext))) return 'video'
+  return 'image'
+}
+
+function normalizeMediaItem(item, index = 0) {
+  if (typeof item === 'string') {
+    return {
+      type: mediaTypeFromUrl(item),
+      url: item,
+      label: '',
+      order: index,
+    }
+  }
+  return {
+    type: mediaTypeFromUrl(item?.url, item?.type),
+    url: item?.url || '',
+    label: item?.label || '',
+    order: Number.isFinite(item?.order) ? item.order : index,
+  }
+}
+
+function sortMedia(items) {
+  return items
+    .map((item, index) => ({ ...normalizeMediaItem(item, index), originalIndex: index }))
+    .filter((item) => item.url)
+    .sort((a, b) => {
+      if (a.type !== b.type) return a.type === 'video' ? -1 : 1
+      return (a.order ?? a.originalIndex) - (b.order ?? b.originalIndex)
+    })
+    .map((item, index) => {
+      const mediaItem = { ...item }
+      delete mediaItem.originalIndex
+      return { ...mediaItem, order: index }
+    })
+}
+
+function mediaFromBike(bike) {
+  const explicit = Array.isArray(bike?.media) ? bike.media : []
+  const fallback = Array.isArray(bike?.images) ? bike.images : []
+  return sortMedia(explicit.length ? explicit : fallback)
+}
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value))
@@ -174,32 +224,56 @@ export default function AdminPage({ content, onContentUpdate }) {
     updateBike(field, value === '' ? '' : Number(value))
   }
 
-  function updateBikeImages(value) {
-    updateBike('images', linesToArray(value))
+  function updateBikeMedia(media) {
+    const sorted = sortMedia(media)
+    updateDraft((next) => {
+      const bike = next.bikes.find((item) => item.slug === selectedBike.slug)
+      bike.media = sorted
+      bike.images = sorted.filter((item) => item.type === 'image').map((item) => item.url)
+    })
   }
 
   function updateBikeSpecs(value) {
     updateBike('specs', parseJson(value, selectedBike.specs || {}))
   }
 
-  async function handleBikeImageUpload(event) {
-    const file = event.target.files?.[0]
-    if (!file) return
+  async function handleBikeMediaUpload(event) {
+    const files = Array.from(event.target.files || [])
+    event.target.value = ''
+    if (!files.length) return
     setError('')
     if (localMode) {
-      const reader = new FileReader()
-      reader.onload = () => {
-        updateBike('images', [...(selectedBike.images || []), reader.result])
-        setMessage(`Added ${file.name} to this local review draft.`)
+      const reads = files.map((file) => new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve({
+          type: file.type.startsWith('video/') ? 'video' : 'image',
+          url: reader.result,
+          label: file.name,
+        })
+        reader.onerror = () => reject(new Error(`Unable to read ${file.name}.`))
+        reader.readAsDataURL(file)
+      }))
+      try {
+        const media = await Promise.all(reads)
+        updateBikeMedia([...mediaFromBike(selectedBike), ...media])
+        setMessage(`Added ${files.length} media file${files.length === 1 ? '' : 's'} to this local review draft.`)
+      } catch (readError) {
+        setError(readError.message)
       }
-      reader.onerror = () => setError('Unable to read the selected image.')
-      reader.readAsDataURL(file)
       return
     }
     try {
-      const result = await uploadCmsImage(file)
-      updateBike('images', [...(selectedBike.images || []), result.url])
-      setMessage(`Uploaded ${file.name}`)
+      const uploaded = []
+      for (const file of files) {
+        const result = await uploadCmsMedia(file)
+        uploaded.push({
+          type: result.type || (file.type.startsWith('video/') ? 'video' : 'image'),
+          url: result.url,
+          label: file.name,
+        })
+      }
+      updateBikeMedia([...mediaFromBike(selectedBike), ...uploaded])
+      setMessage(`Uploaded ${files.length} media file${files.length === 1 ? '' : 's'}.`)
     } catch (uploadError) {
       setError(uploadError.message)
     }
@@ -222,6 +296,7 @@ export default function AdminPage({ content, onContentUpdate }) {
       sourceUrl: '',
       summary: '',
       story: '',
+      media: [{ type: 'image', url: '/images/original-stock/2009-honda-varadero-125-low-mileage-01.webp', label: 'Default photo', order: 0 }],
       images: ['/images/original-stock/2009-honda-varadero-125-low-mileage-01.webp'],
       specs: {},
       originalNotes: '',
@@ -346,9 +421,9 @@ export default function AdminPage({ content, onContentUpdate }) {
             setSelectedSlug={setSelectedSlug}
             updateBike={updateBike}
             updateBikeNumber={updateBikeNumber}
-            updateBikeImages={updateBikeImages}
+            updateBikeMedia={updateBikeMedia}
             updateBikeSpecs={updateBikeSpecs}
-            onUpload={handleBikeImageUpload}
+            onUpload={handleBikeMediaUpload}
             addBike={addBike}
             removeBike={removeBike}
           />
@@ -441,7 +516,7 @@ function AdminStat({ value, label }) {
   )
 }
 
-function StockPanel({ bikes, selectedBike, selectedSlug, setSelectedSlug, updateBike, updateBikeNumber, updateBikeImages, updateBikeSpecs, onUpload, addBike, removeBike }) {
+function StockPanel({ bikes, selectedBike, selectedSlug, setSelectedSlug, updateBike, updateBikeNumber, updateBikeMedia, updateBikeSpecs, onUpload, addBike, removeBike }) {
   if (!selectedBike) {
     return (
       <section className="rounded-[1.5rem] border border-stone-700 bg-stone-900/70 p-6">
@@ -501,20 +576,103 @@ function StockPanel({ bikes, selectedBike, selectedSlug, setSelectedSlug, update
           <TextArea label="Short story" value={selectedBike.story} onChange={(value) => updateBike('story', value)} className="md:col-span-2" />
           <TextArea label="Summary" value={selectedBike.summary} onChange={(value) => updateBike('summary', value)} className="md:col-span-2" rows={5} />
           <TextArea label="Dealer notes" value={selectedBike.originalNotes} onChange={(value) => updateBike('originalNotes', value)} className="md:col-span-2" rows={8} />
-          <div className="md:col-span-2">
-            <div className="mb-2 flex items-center justify-between gap-3">
-              <label className="block text-xs font-black uppercase tracking-wider text-stone-300">Image URLs, one per line</label>
-              <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-stone-700 px-4 py-2 text-[10px] font-black uppercase tracking-wider text-stone-300 hover:border-amber-300">
-                <ImagePlus className="h-3.5 w-3.5" /> Upload
-                <input type="file" accept="image/*" className="hidden" onChange={onUpload} />
-              </label>
-            </div>
-            <textarea value={arrayToLines(selectedBike.images)} onChange={(event) => updateBikeImages(event.target.value)} rows="8" className="w-full rounded-2xl border border-stone-700 bg-stone-950 px-4 py-3 text-sm text-white outline-none focus:border-amber-300" />
-          </div>
+          <MediaManager bike={selectedBike} updateBikeMedia={updateBikeMedia} onUpload={onUpload} />
           <TextArea label="Specs JSON" value={JSON.stringify(selectedBike.specs || {}, null, 2)} onChange={updateBikeSpecs} className="md:col-span-2" rows={8} />
         </div>
       </section>
     </div>
+  )
+}
+
+function MediaManager({ bike, updateBikeMedia, onUpload }) {
+  const media = mediaFromBike(bike)
+  const [urlValue, setUrlValue] = useState('')
+
+  function addUrl() {
+    const url = urlValue.trim()
+    if (!url) return
+    updateBikeMedia([...media, { type: mediaTypeFromUrl(url), url, label: '', order: media.length }])
+    setUrlValue('')
+  }
+
+  function removeMedia(index) {
+    updateBikeMedia(media.filter((_, itemIndex) => itemIndex !== index))
+  }
+
+  function moveMedia(index, direction) {
+    const next = [...media]
+    const targetIndex = index + direction
+    if (targetIndex < 0 || targetIndex >= next.length) return
+    const [item] = next.splice(index, 1)
+    next.splice(targetIndex, 0, item)
+    updateBikeMedia(next)
+  }
+
+  return (
+    <section className="md:col-span-2 rounded-[1.5rem] border border-stone-700 bg-stone-950/55 p-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs font-black uppercase tracking-wider text-amber-300">Product media</p>
+          <h3 className="mt-1 text-xl font-black uppercase text-white">Photos and videos</h3>
+          <p className="mt-2 text-xs leading-5 text-stone-400">Videos are automatically shown first. Upload from desktop or choose photos/videos from a phone gallery.</p>
+        </div>
+        <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full bg-amber-300 px-5 py-3 text-xs font-black uppercase tracking-wider text-stone-950">
+          <ImagePlus className="h-4 w-4" /> Upload media
+          <input type="file" accept="image/*,video/*" multiple className="hidden" onChange={onUpload} />
+        </label>
+      </div>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto]">
+        <input
+          value={urlValue}
+          onChange={(event) => setUrlValue(event.target.value)}
+          placeholder="Paste image or video URL, e.g. /uploads/bike.mp4"
+          className="rounded-full border border-stone-700 bg-stone-950 px-5 py-3 text-sm text-white outline-none focus:border-amber-300"
+        />
+        <button type="button" onClick={addUrl} className="rounded-full border border-stone-700 px-5 py-3 text-xs font-black uppercase tracking-wider text-stone-300 hover:border-amber-300">
+          Add URL
+        </button>
+      </div>
+
+      <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {media.map((item, index) => (
+          <article key={`${item.url}-${index}`} className="overflow-hidden rounded-2xl border border-stone-700 bg-stone-900">
+            <div className="relative aspect-[4/3] bg-stone-950">
+              {item.type === 'video' ? (
+                <video src={item.url} className="h-full w-full object-contain" controls playsInline preload="metadata" />
+              ) : (
+                <img src={item.url} alt={item.label || `${bike.title} media ${index + 1}`} className="h-full w-full object-contain p-2" loading="lazy" />
+              )}
+              <span className={`absolute left-3 top-3 inline-flex items-center gap-1 rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wider ${item.type === 'video' ? 'bg-sky-300 text-stone-950' : 'bg-amber-300 text-stone-950'}`}>
+                {item.type === 'video' ? <Film className="h-3 w-3" /> : <ImageIcon className="h-3 w-3" />}
+                {item.type}
+              </span>
+              {index === 0 && <span className="absolute right-3 top-3 rounded-full bg-emerald-300 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-stone-950">First</span>}
+            </div>
+            <div className="p-3">
+              <p className="truncate text-xs text-stone-400">{item.label || item.url}</p>
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                <button type="button" onClick={() => moveMedia(index, -1)} disabled={index === 0} className="inline-flex items-center justify-center rounded-full border border-stone-700 px-3 py-2 text-xs text-stone-300 disabled:opacity-30">
+                  <ArrowUp className="h-3.5 w-3.5" />
+                </button>
+                <button type="button" onClick={() => moveMedia(index, 1)} disabled={index === media.length - 1} className="inline-flex items-center justify-center rounded-full border border-stone-700 px-3 py-2 text-xs text-stone-300 disabled:opacity-30">
+                  <ArrowDown className="h-3.5 w-3.5" />
+                </button>
+                <button type="button" onClick={() => removeMedia(index)} className="inline-flex items-center justify-center rounded-full border border-red-300/30 px-3 py-2 text-xs text-red-200">
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      {!media.length && (
+        <div className="mt-5 rounded-2xl border border-dashed border-stone-700 p-8 text-center text-sm text-stone-400">
+          No media yet. Upload photos or a product video to start the listing gallery.
+        </div>
+      )}
+    </section>
   )
 }
 
@@ -661,7 +819,8 @@ function normalizeContent(content) {
     ...bike,
     slug: bike.slug || slugify(bike.title),
     status: bike.status || 'AVAILABLE',
-    images: Array.isArray(bike.images) ? bike.images.filter(Boolean) : [],
+    media: mediaFromBike(bike),
+    images: mediaFromBike(bike).filter((item) => item.type === 'image').map((item) => item.url),
     specs: bike.specs && typeof bike.specs === 'object' ? bike.specs : {},
   }))
   return next

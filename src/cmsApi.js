@@ -83,7 +83,7 @@ export async function saveCmsContent(content) {
   return body
 }
 
-export async function uploadCmsImage(file) {
+export async function uploadCmsMedia(file) {
   const form = new FormData()
   form.append('file', file)
   const response = await fetch(UPLOAD_API, {
@@ -97,3 +97,5 @@ export async function uploadCmsImage(file) {
   }
   return body
 }
+
+export const uploadCmsImage = uploadCmsMedia

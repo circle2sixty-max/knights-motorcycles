@@ -26,3 +26,9 @@ Deployment setup:
    ```
 
 The public website reads `/api/content.php` when CMS content exists. Before the first publish, it falls back to the bundled React content.
+
+`upload.php` accepts product photos and product videos:
+
+```text
+JPG, PNG, WebP, GIF, MP4, WebM, MOV, M4V
+```

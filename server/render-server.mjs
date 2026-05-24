@@ -24,9 +24,12 @@ const mimeTypes = {
   '.jpg': 'image/jpeg',
   '.js': 'application/javascript; charset=utf-8',
   '.json': 'application/json; charset=utf-8',
+  '.m4v': 'video/mp4',
+  '.mov': 'video/quicktime',
   '.mp4': 'video/mp4',
   '.png': 'image/png',
   '.svg': 'image/svg+xml',
+  '.webm': 'video/webm',
   '.webp': 'image/webp',
 }
 
@@ -213,14 +216,15 @@ async function handleApi(request, response, pathname) {
       return
     }
     try {
-      const buffer = await readBody(request)
+      const buffer = await readBody(request, 100 * 1024 * 1024)
       const file = parseMultipart(buffer, request.headers['content-type'] || '')
       if (!file) {
         sendJson(response, 400, { error: 'No file uploaded' })
         return
       }
-      if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.mimeType)) {
-        sendJson(response, 400, { error: 'Only JPG, PNG, WebP and GIF images are supported' })
+      const supportedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'video/mp4', 'video/webm', 'video/quicktime', 'video/x-m4v']
+      if (!supportedTypes.includes(file.mimeType)) {
+        sendJson(response, 400, { error: 'Only JPG, PNG, WebP, GIF, MP4, WebM, MOV and M4V files are supported' })
         return
       }
       const ext = {
@@ -228,6 +232,10 @@ async function handleApi(request, response, pathname) {
         'image/png': '.png',
         'image/webp': '.webp',
         'image/gif': '.gif',
+        'video/mp4': '.mp4',
+        'video/webm': '.webm',
+        'video/quicktime': '.mov',
+        'video/x-m4v': '.m4v',
       }[file.mimeType]
       const baseName = path.basename(file.filename, path.extname(file.filename)).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'image'
       const month = new Date().toISOString().slice(0, 7).replace('-', '/')
@@ -235,7 +243,7 @@ async function handleApi(request, response, pathname) {
       const target = path.join(uploadDir, filename)
       await ensureDir(path.dirname(target))
       await fs.writeFile(target, file.data)
-      sendJson(response, 200, { ok: true, url: `/uploads/${filename}` })
+      sendJson(response, 200, { ok: true, type: file.mimeType.startsWith('video/') ? 'video' : 'image', url: `/uploads/${filename}` })
     } catch (error) {
       sendJson(response, 400, { error: error.message || 'Upload failed' })
     }

@@ -32,7 +32,8 @@ The new CMS adds:
 
 - Admin login screen.
 - Stock editor for adding/editing/removing vehicles.
-- Vehicle image URL editing and image upload once PHP API is deployed.
+- Vehicle media editor with direct image/video previews, phone gallery import, upload controls and URL fallback.
+- Product videos are sorted before photos and play directly on the vehicle detail page.
 - Company details editor for phone, email, address, hours and map link.
 - Page copy editor for hero text, homepage copy, story paragraphs, service standards, checklists, finance rows, legal copy and structured modules.
 - Full JSON import/export for backup, staging-to-live transfer and emergency restore.
