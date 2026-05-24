@@ -38,6 +38,7 @@ const iconMap = {
 }
 
 const SiteContentContext = createContext(defaultSiteContent)
+const CMS_SYNC_INTERVAL_MS = 30000
 
 function useSiteContent() {
   return useContext(SiteContentContext)
@@ -117,7 +118,7 @@ function App() {
 
   useEffect(() => {
     let active = true
-    fetchCmsContent()
+    const loadCmsContent = () => fetchCmsContent()
       .then((cmsContent) => {
         if (active && cmsContent?.bikes?.length) {
           setContent({ ...defaultSiteContent, ...cmsContent })
@@ -126,8 +127,20 @@ function App() {
       .catch(() => {
         // The static default content keeps the site usable before the PHP CMS API is deployed.
       })
+    const syncVisibleContent = () => {
+      if (document.visibilityState !== 'hidden') loadCmsContent()
+    }
+
+    loadCmsContent()
+    const syncTimer = window.setInterval(syncVisibleContent, CMS_SYNC_INTERVAL_MS)
+    window.addEventListener('focus', syncVisibleContent)
+    document.addEventListener('visibilitychange', syncVisibleContent)
+
     return () => {
       active = false
+      window.clearInterval(syncTimer)
+      window.removeEventListener('focus', syncVisibleContent)
+      document.removeEventListener('visibilitychange', syncVisibleContent)
     }
   }, [])
 

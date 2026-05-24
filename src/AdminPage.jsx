@@ -181,6 +181,8 @@ export default function AdminPage({ content, onContentUpdate }) {
     setError('')
     setMessage('')
     const nextContent = normalizeContent(draft)
+    nextContent.version = (Number(nextContent.version) || 0) + 1
+    nextContent.updatedAt = new Date().toISOString()
     if (localMode) {
       saveLocalDraft(nextContent)
       onContentUpdate(nextContent)
