@@ -596,7 +596,7 @@ function StockPanel({ bikes, selectedBike, selectedSlug, stockFilter, setStockFi
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Title" value={selectedBike.title} onChange={(value) => updateBike('title', value)} />
+          <Field label="Product title" value={selectedBike.title} onChange={(value) => updateBike('title', value)} />
           <Field label="Slug" value={selectedBike.slug} onChange={(value) => updateBike('slug', slugify(value))} />
           <Field label="Make" value={selectedBike.make} onChange={(value) => updateBike('make', value)} />
           <Field label="Model" value={selectedBike.model} onChange={(value) => updateBike('model', value)} />
@@ -608,9 +608,9 @@ function StockPanel({ bikes, selectedBike, selectedSlug, stockFilter, setStockFi
           <Field label="Price" type="number" value={selectedBike.price} onChange={(value) => updateBikeNumber('price', value)} />
           <SelectField label="Status" value={selectedBike.status} onChange={(value) => updateBike('status', value)} options={['AVAILABLE', 'SOLD', 'RESERVED']} />
           <Field label="Source URL" value={selectedBike.sourceUrl} onChange={(value) => updateBike('sourceUrl', value)} />
-          <TextArea label="Short story" value={selectedBike.story} onChange={(value) => updateBike('story', value)} className="md:col-span-2" />
-          <TextArea label="Summary" value={selectedBike.summary} onChange={(value) => updateBike('summary', value)} className="md:col-span-2" rows={5} />
-          <TextArea label="Dealer notes" value={selectedBike.originalNotes} onChange={(value) => updateBike('originalNotes', value)} className="md:col-span-2" rows={8} />
+          <TextArea label="Listing headline / rider story" value={selectedBike.story} onChange={(value) => updateBike('story', value)} className="md:col-span-2" />
+          <TextArea label="Product description" value={selectedBike.summary} onChange={(value) => updateBike('summary', value)} className="md:col-span-2" rows={5} />
+          <TextArea label="Detailed dealer notes" value={selectedBike.originalNotes} onChange={(value) => updateBike('originalNotes', value)} className="md:col-span-2" rows={8} />
           <MediaManager bike={selectedBike} updateBikeMedia={updateBikeMedia} onUpload={onUpload} />
           <TextArea label="Specs JSON" value={JSON.stringify(selectedBike.specs || {}, null, 2)} onChange={updateBikeSpecs} className="md:col-span-2" rows={8} />
         </div>
@@ -641,6 +641,12 @@ function MediaManager({ bike, updateBikeMedia, onUpload }) {
     const [item] = next.splice(index, 1)
     next.splice(targetIndex, 0, item)
     updateBikeMedia(next)
+  }
+
+  function updateMediaLabel(index, label) {
+    updateBikeMedia(media.map((item, itemIndex) => (
+      itemIndex === index ? { ...item, label } : item
+    )))
   }
 
   return (
@@ -685,7 +691,16 @@ function MediaManager({ bike, updateBikeMedia, onUpload }) {
               {index === 0 && <span className="absolute right-3 top-3 rounded-full bg-emerald-300 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-stone-950">First</span>}
             </div>
             <div className="p-3">
-              <p className="truncate text-xs text-stone-400">{item.label || item.url}</p>
+              <label>
+                <span className="mb-2 block text-[10px] font-black uppercase tracking-wider text-stone-400">Media title / caption</span>
+                <input
+                  value={item.label || ''}
+                  onChange={(event) => updateMediaLabel(index, event.target.value)}
+                  placeholder={item.type === 'video' ? 'Product walkaround video' : 'Front angle photo'}
+                  className="w-full rounded-xl border border-stone-700 bg-stone-950 px-3 py-2 text-xs text-white outline-none focus:border-amber-300"
+                />
+              </label>
+              <p className="mt-2 truncate text-[10px] text-stone-500" title={item.url}>{item.url}</p>
               <div className="mt-3 grid grid-cols-3 gap-2">
                 <button type="button" onClick={() => moveMedia(index, -1)} disabled={index === 0} className="inline-flex items-center justify-center rounded-full border border-stone-700 px-3 py-2 text-xs text-stone-300 disabled:opacity-30">
                   <ArrowUp className="h-3.5 w-3.5" />
