@@ -281,10 +281,7 @@ function SiteChrome() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
         <Link to="/" className="group flex items-center gap-3">
           <img src={brandLogo} alt="Knights Motorcycles gold knight logo" className="h-12 w-12 rounded-full border border-amber-300/30 object-cover shadow-lg shadow-amber-500/10" />
-          <div>
-            <p className="text-sm font-black uppercase tracking-[0.28em] text-white">Knights</p>
-            <p className="text-[10px] uppercase tracking-[0.24em] text-amber-300">Used Motorcycles Leeds</p>
-          </div>
+          <p className="whitespace-nowrap text-xs font-black tracking-[0.08em] text-white sm:text-sm">Knight Motorcycles Leeds</p>
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">

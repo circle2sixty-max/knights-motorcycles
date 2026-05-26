@@ -37,5 +37,7 @@ assert.match(adminSource, /Deposit page JSON/, 'Admin should expose deposit page
 assert.match(appSource, /function mergeNavItems/, 'App should backfill new nav items when old CMS JSON is loaded')
 assert.match(appSource, /function mergeServiceCards/, 'App should backfill new service cards when old CMS JSON is loaded')
 assert.match(adminSource, /function mergeDraftContent/, 'Admin should deep-merge old local drafts with the current content shape')
+assert.match(appSource, />Knight Motorcycles Leeds</, 'Header logo title should be one-line Knight Motorcycles Leeds')
+assert.doesNotMatch(appSource, /Used Motorcycles Leeds/, 'Header logo title should not include Used Motorcycles Leeds')
 
 console.log('feature-content-check passed')
