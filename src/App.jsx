@@ -37,6 +37,95 @@ const iconMap = {
   Wrench,
 }
 
+const leadFormConfigs = {
+  appointment: [
+    { name: 'Bike of interest', label: 'Bike of interest', placeholder: 'Yamaha R125 / any 125cc bike' },
+    { name: 'Preferred date', label: 'Preferred date', type: 'date' },
+    { name: 'Preferred time window', label: 'Preferred time', placeholder: 'Morning / afternoon / after 5pm' },
+    { name: 'Viewing purpose', label: 'Viewing purpose', placeholder: 'Buying / test ride discussion / paperwork check' },
+  ],
+  viewing: [
+    { name: 'Bike of interest', label: 'Bike of interest', placeholder: 'Yamaha R125 / any 125cc bike' },
+    { name: 'Preferred date', label: 'Preferred date', type: 'date' },
+    { name: 'Preferred time window', label: 'Preferred time', placeholder: 'Morning / afternoon / after 5pm' },
+  ],
+  deposit: [
+    { name: 'Bike to reserve', label: 'Bike to reserve', placeholder: 'Bike title or stock link' },
+    { name: 'Proposed deposit', label: 'Proposed deposit', placeholder: 'e.g. £100 / £200 / discuss' },
+    { name: 'When can you view or collect', label: 'Viewing / collection timing', placeholder: 'Today / this weekend / next week' },
+    { name: 'Finance or cash buyer', label: 'Payment route', placeholder: 'Cash / finance / waiting for lender' },
+  ],
+  valuation: [
+    { name: 'Registration', label: 'Registration', placeholder: 'AB12 CDE' },
+    { name: 'Make and model', label: 'Make and model', placeholder: 'Yamaha MT-125' },
+    { name: 'Mileage', label: 'Mileage', placeholder: '12,500' },
+    { name: 'Service history', label: 'Service history', placeholder: 'Full / part / none / unknown' },
+    { name: 'Outstanding finance', label: 'Outstanding finance', placeholder: 'No / yes / unsure' },
+    { name: 'Preferred outcome', label: 'Preferred outcome', placeholder: 'Cash sale / part exchange / collection' },
+  ],
+  finance: [
+    { name: 'Bike of interest', label: 'Bike of interest', placeholder: 'Bike title or budget range' },
+    { name: 'Deposit available', label: 'Deposit available', placeholder: 'e.g. £300' },
+    { name: 'Monthly budget', label: 'Monthly budget', placeholder: 'e.g. £80/month' },
+    { name: 'Preferred term', label: 'Preferred term', placeholder: '24 / 36 / 48 months / unsure' },
+  ],
+}
+
+const mergeObjectKeys = [
+  'assets',
+  'company',
+  'splash',
+  'home',
+  'featuredStock',
+  'brandStory',
+  'originalImageStory',
+  'services',
+  'inventory',
+  'actionWindows',
+  'appointment',
+  'deposit',
+  'sell',
+  'finance',
+  'contact',
+  'aboutPage',
+  'legal',
+  'leadForms',
+  'cta',
+  'footer',
+]
+
+function mergeNavItems(defaultItems = [], cmsItems = []) {
+  const items = Array.isArray(cmsItems) && cmsItems.length ? [...cmsItems] : []
+  const seen = new Set(items.map((item) => item?.[1]).filter(Boolean))
+  defaultItems.forEach((item) => {
+    if (!seen.has(item[1])) items.push(item)
+  })
+  return items.length ? items : defaultItems
+}
+
+function mergeServiceCards(defaultCards = [], cmsCards = []) {
+  const cards = Array.isArray(cmsCards) && cmsCards.length ? [...cmsCards] : []
+  const seen = new Set(cards.map((card) => card?.link).filter(Boolean))
+  defaultCards.forEach((card) => {
+    if (!seen.has(card.link)) cards.push(card)
+  })
+  return cards.length ? cards : defaultCards
+}
+
+function mergeSiteContent(defaultContent, cmsContent = {}) {
+  const merged = { ...defaultContent, ...(cmsContent || {}) }
+  mergeObjectKeys.forEach((key) => {
+    const defaultValue = defaultContent[key]
+    const cmsValue = cmsContent?.[key]
+    if (defaultValue && typeof defaultValue === 'object' && !Array.isArray(defaultValue)) {
+      merged[key] = { ...defaultValue, ...(cmsValue && typeof cmsValue === 'object' && !Array.isArray(cmsValue) ? cmsValue : {}) }
+    }
+  })
+  merged.navItems = mergeNavItems(defaultContent.navItems, cmsContent?.navItems)
+  merged.services.cards = mergeServiceCards(defaultContent.services?.cards, cmsContent?.services?.cards)
+  return merged
+}
+
 const SiteContentContext = createContext(defaultSiteContent)
 const CMS_SYNC_INTERVAL_MS = 30000
 
@@ -114,14 +203,14 @@ function cleanDealerNotes(notes) {
 }
 
 function App() {
-  const [content, setContent] = useState(() => loadLocalDraft() || defaultSiteContent)
+  const [content, setContent] = useState(() => mergeSiteContent(defaultSiteContent, loadLocalDraft() || {}))
 
   useEffect(() => {
     let active = true
     const loadCmsContent = () => fetchCmsContent()
       .then((cmsContent) => {
         if (active && cmsContent?.bikes?.length) {
-          setContent({ ...defaultSiteContent, ...cmsContent })
+          setContent(mergeSiteContent(defaultSiteContent, cmsContent))
         }
       })
       .catch(() => {
@@ -155,6 +244,8 @@ function App() {
             <Route path="/home" element={<HomePage />} />
             <Route path="/bikes" element={<InventoryPage />} />
             <Route path="/bikes/:slug" element={<BikeDetailPage />} />
+            <Route path="/book-viewing" element={<AppointmentPage />} />
+            <Route path="/reserve" element={<DepositPage />} />
             <Route path="/sell-your-bike" element={<SellPage />} />
             <Route path="/finance" element={<FinancePage />} />
             <Route path="/contact" element={<ContactPage />} />
@@ -368,6 +459,7 @@ function HomePage() {
       <FeaturedStock bikes={featured} />
       <BrandStory />
       <OriginalImageStory />
+      <ActionWindowsSection />
       <ServicesSection />
       <CallToAction />
     </main>
@@ -476,6 +568,48 @@ function OriginalImageStory() {
               </div>
             </article>
           ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+
+function ActionWindowsSection({ compact = false }) {
+  const { actionWindows } = useSiteContent()
+  const windows = actionWindows ? Object.entries(actionWindows) : []
+  if (!windows.length) return null
+
+  return (
+    <section className={`${compact ? 'py-10' : 'border-y border-stone-800 bg-stone-900/30 px-4 py-20'}`}>
+      <div className="mx-auto max-w-7xl">
+        {!compact && <SectionHeading eyebrow="Customer action windows" title="Four clear ways to move forward" text="Book a viewing, reserve a bike, request a sell/PX valuation or start a finance enquiry from one simple section." />}
+        <div className={`${compact ? 'grid gap-4 md:grid-cols-2' : 'mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4'}`}>
+          {windows.map(([key, item]) => {
+            const Icon = iconMap[item.icon] || CalendarDays
+            return (
+              <Link key={key} to={item.path} className="group rounded-[1.75rem] border border-stone-700 bg-stone-950/75 p-6 transition hover:-translate-y-1 hover:border-amber-300/60 hover:shadow-2xl hover:shadow-black/30">
+                <div className="flex items-center justify-between gap-4">
+                  <Icon className="h-8 w-8 text-amber-300" />
+                  <span className="rounded-full border border-amber-300/30 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-amber-200">{item.cta}</span>
+                </div>
+                <h3 className="mt-6 text-2xl font-black uppercase leading-tight text-white">{item.title}</h3>
+                <p className="mt-3 text-sm leading-6 text-stone-400">{item.text}</p>
+                {Array.isArray(item.bullets) && (
+                  <div className="mt-5 grid gap-2">
+                    {item.bullets.map((bullet) => (
+                      <p key={bullet} className="flex gap-2 text-xs leading-5 text-stone-300">
+                        <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-300" /> {bullet}
+                      </p>
+                    ))}
+                  </div>
+                )}
+                <span className="mt-6 inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-amber-200">
+                  Open window <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-1" />
+                </span>
+              </Link>
+            )
+          })}
         </div>
       </div>
     </section>
@@ -630,6 +764,12 @@ function BikeDetailPage() {
                 <a href={`mailto:${company.email}?subject=Enquiry about ${encodeURIComponent(bike.title)}`} className="inline-flex items-center justify-center gap-2 rounded-full border border-stone-600 px-5 py-3 text-sm font-black uppercase tracking-wider text-white hover:border-amber-300">
                   <Mail className="h-4 w-4" /> Enquire
                 </a>
+                <Link to="/book-viewing" className="inline-flex items-center justify-center gap-2 rounded-full border border-amber-300/50 px-5 py-3 text-sm font-black uppercase tracking-wider text-amber-100 hover:bg-amber-300 hover:text-stone-950">
+                  <CalendarDays className="h-4 w-4" /> Book viewing
+                </Link>
+                <Link to="/reserve" className="inline-flex items-center justify-center gap-2 rounded-full border border-stone-600 px-5 py-3 text-sm font-black uppercase tracking-wider text-white hover:border-amber-300">
+                  <Wallet className="h-4 w-4" /> Reserve
+                </Link>
               </div>
             </div>
           </aside>
@@ -682,6 +822,56 @@ function MediaDisplay({ media, title, className, controls = false, compact = fal
   return <img src={media.url} alt={media.label || title} className={className} loading="lazy" />
 }
 
+
+function AppointmentPage() {
+  const { appointment } = useSiteContent()
+  return (
+    <main className="px-4 py-14">
+      <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.85fr_1.15fr]">
+        <div>
+          <SectionHeading align="left" eyebrow={appointment.eyebrow} title={appointment.title} text={appointment.text} />
+          <InfoChecklist title={appointment.checklistTitle} items={appointment.checklist} />
+          <ActionWindowsSection compact />
+        </div>
+        <LeadForm type="appointment" title={appointment.formTitle || 'Appointment request'} />
+      </div>
+    </main>
+  )
+}
+
+function DepositPage() {
+  const { deposit } = useSiteContent()
+  return (
+    <main className="px-4 py-14">
+      <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.85fr_1.15fr]">
+        <div>
+          <SectionHeading align="left" eyebrow={deposit.eyebrow} title={deposit.title} text={deposit.text} />
+          <InfoChecklist title={deposit.checklistTitle} items={deposit.checklist} />
+          <div className="mt-6 rounded-2xl border border-amber-300/25 bg-amber-300/10 p-5 text-sm leading-7 text-amber-50">
+            <strong className="text-amber-200">Important:</strong> {deposit.disclaimer}
+          </div>
+        </div>
+        <LeadForm type="deposit" title={deposit.formTitle || 'Deposit / reservation enquiry'} />
+      </div>
+    </main>
+  )
+}
+
+function InfoChecklist({ title, items = [] }) {
+  return (
+    <section className="mt-8 rounded-[1.75rem] border border-stone-700 bg-stone-900/60 p-6">
+      <h2 className="text-2xl font-black uppercase text-white">{title}</h2>
+      <div className="mt-5 grid gap-3">
+        {items.map((item) => (
+          <p key={item} className="flex gap-3 text-sm leading-6 text-stone-300">
+            <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-amber-300" /> {item}
+          </p>
+        ))}
+      </div>
+    </section>
+  )
+}
+
 function SellPage() {
   const { sell } = useSiteContent()
 
@@ -712,13 +902,16 @@ function FinancePage() {
     <main className="px-4 py-14">
       <div className="mx-auto max-w-7xl">
         <SectionHeading eyebrow={finance.eyebrow} title={finance.title} text={finance.text} />
-        <div className="mt-10 grid gap-8 lg:grid-cols-2">
-          <div className="rounded-[2rem] border border-stone-700 bg-stone-900/60 p-7">
-            <h2 className="text-2xl font-black uppercase text-white">{finance.exampleTitle}</h2>
-            <div className="mt-6 grid gap-3">
-              {finance.exampleRows.map(([label, value]) => <DetailRow key={label} label={label} value={value} />)}
-            </div>
-            <p className="mt-5 text-xs leading-6 text-stone-400">{finance.disclaimer}</p>
+        <div className="mt-10 grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
+          <div className="grid gap-6">
+            <section className="rounded-[2rem] border border-stone-700 bg-stone-900/60 p-7">
+              <h2 className="text-2xl font-black uppercase text-white">{finance.exampleTitle}</h2>
+              <div className="mt-6 grid gap-3">
+                {finance.exampleRows.map(([label, value]) => <DetailRow key={label} label={label} value={value} />)}
+              </div>
+              <p className="mt-5 text-xs leading-6 text-stone-400">{finance.disclaimer}</p>
+            </section>
+            <InfoChecklist title="Finance enquiry flow" items={finance.steps} />
           </div>
           <LeadForm type="finance" title="Finance enquiry" />
         </div>
@@ -745,7 +938,7 @@ function ContactPage() {
             <strong className="text-amber-200">Viewing tip:</strong> {contact.tip}
           </div>
         </div>
-        <LeadForm type="viewing" title="Book a viewing" />
+        <LeadForm type="appointment" title="Book a viewing" />
       </div>
     </main>
   )
@@ -791,11 +984,14 @@ function LegalPage() {
 function LeadForm({ title, type }) {
   const { company, leadForms } = useSiteContent()
   const [sent, setSent] = useState(false)
+  const fields = leadFormConfigs[type] || leadFormConfigs.appointment
 
   function handleSubmit(event) {
     event.preventDefault()
     const form = new FormData(event.currentTarget)
-    const lines = Array.from(form.entries()).map(([key, value]) => `${key}: ${value}`)
+    const lines = Array.from(form.entries())
+      .filter(([key]) => key !== 'Consent')
+      .map(([key, value]) => `${key}: ${value}`)
     window.location.href = `mailto:${company.email}?subject=${encodeURIComponent(leadForms[type] || title)}&body=${encodeURIComponent(lines.join('\n'))}`
     setSent(true)
   }
@@ -803,20 +999,22 @@ function LeadForm({ title, type }) {
   return (
     <form onSubmit={handleSubmit} className="rounded-[2rem] border border-stone-700 bg-stone-900/70 p-7">
       <h2 className="text-2xl font-black uppercase text-white">{title}</h2>
+      <p className="mt-3 text-sm leading-6 text-stone-400">This window prepares an email enquiry for the dealer. A full CRM/payment/lender integration can be connected later.</p>
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <FormInput name="Name" label="Your name" required />
         <FormInput name="Phone" label="Phone" required />
         <FormInput name="Email" label="Email" type="email" />
         <FormInput name="Preferred contact" label="Preferred contact" placeholder="Call / text / email" />
-        <FormInput name="Bike or registration" label="Bike / registration" placeholder="YZF-R125 or YX21 ABC" />
-        <FormInput name="Mileage" label="Mileage" placeholder="12,500" />
+        {fields.map((field) => (
+          <FormInput key={field.name} {...field} />
+        ))}
         <div className="sm:col-span-2">
           <label className="mb-2 block text-xs font-black uppercase tracking-wider text-stone-300">Message</label>
-          <textarea name="Message" rows="5" className="w-full rounded-2xl border border-stone-700 bg-stone-950 px-4 py-3 text-sm text-white outline-none focus:border-amber-300" placeholder="Tell us what you need." />
+          <textarea name="Message" rows="5" className="w-full rounded-2xl border border-stone-700 bg-stone-950 px-4 py-3 text-sm text-white outline-none focus:border-amber-300" placeholder="Tell us anything else the dealer should know." />
         </div>
       </div>
       <label className="mt-5 flex gap-3 text-xs leading-5 text-stone-400">
-        <input required type="checkbox" className="mt-1" />
+        <input required type="checkbox" name="Consent" className="mt-1" />
         I agree to be contacted by Knights Motorcycles about this enquiry.
       </label>
       <button className="mt-6 inline-flex items-center gap-3 rounded-full bg-amber-300 px-7 py-4 text-sm font-black uppercase tracking-wider text-stone-950" type="submit">
@@ -939,7 +1137,7 @@ function CallToAction() {
         <p className="mx-auto mt-4 max-w-2xl text-base leading-8 text-stone-300">{cta.text}</p>
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
           <a href={company.phoneHref} className="inline-flex items-center justify-center gap-2 rounded-full bg-amber-300 px-7 py-4 text-sm font-black uppercase tracking-wider text-stone-950"><Phone className="h-4 w-4" /> Call {company.phone}</a>
-          <Link to="/contact" className="inline-flex items-center justify-center gap-2 rounded-full border border-stone-600 px-7 py-4 text-sm font-black uppercase tracking-wider text-white">{cta.secondary}</Link>
+          <Link to={cta.secondaryPath || '/book-viewing'} className="inline-flex items-center justify-center gap-2 rounded-full border border-stone-600 px-7 py-4 text-sm font-black uppercase tracking-wider text-white">{cta.secondary}</Link>
         </div>
       </div>
     </section>

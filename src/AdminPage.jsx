@@ -114,6 +114,64 @@ function parseJson(value, fallback) {
   }
 }
 
+const mergeDraftObjectKeys = [
+  'assets',
+  'company',
+  'splash',
+  'home',
+  'featuredStock',
+  'brandStory',
+  'originalImageStory',
+  'services',
+  'inventory',
+  'actionWindows',
+  'appointment',
+  'deposit',
+  'sell',
+  'finance',
+  'contact',
+  'aboutPage',
+  'legal',
+  'leadForms',
+  'cta',
+  'footer',
+]
+
+function mergeNavItems(defaultItems = [], draftItems = []) {
+  const items = Array.isArray(draftItems) && draftItems.length ? [...draftItems] : []
+  const seen = new Set(items.map((item) => item?.[1]).filter(Boolean))
+  defaultItems.forEach((item) => {
+    if (!seen.has(item[1])) items.push(item)
+  })
+  return items.length ? items : defaultItems
+}
+
+function mergeServiceCards(defaultCards = [], draftCards = []) {
+  const cards = Array.isArray(draftCards) && draftCards.length ? [...draftCards] : []
+  const seen = new Set(cards.map((card) => card?.link).filter(Boolean))
+  defaultCards.forEach((card) => {
+    if (!seen.has(card.link)) cards.push(card)
+  })
+  return cards.length ? cards : defaultCards
+}
+
+function mergeDraftContent(currentContent, savedDraft = {}) {
+  const draft = savedDraft || {}
+  const merged = { ...currentContent, ...draft }
+  mergeDraftObjectKeys.forEach((key) => {
+    const currentValue = currentContent?.[key]
+    const draftValue = draft?.[key]
+    if (currentValue && typeof currentValue === 'object' && !Array.isArray(currentValue)) {
+      merged[key] = { ...currentValue, ...(draftValue && typeof draftValue === 'object' && !Array.isArray(draftValue) ? draftValue : {}) }
+    }
+  })
+  merged.navItems = mergeNavItems(currentContent?.navItems, draft?.navItems)
+  if (merged.services?.cards) {
+    merged.services.cards = mergeServiceCards(currentContent?.services?.cards, draft?.services?.cards)
+  }
+  return merged
+}
+
 function downloadJson(content) {
   const blob = new Blob([JSON.stringify(content, null, 2)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
@@ -125,7 +183,7 @@ function downloadJson(content) {
 }
 
 export default function AdminPage({ content, onContentUpdate }) {
-  const [draft, setDraft] = useState(() => clone(loadLocalDraft() || content))
+  const [draft, setDraft] = useState(() => clone(mergeDraftContent(content, loadLocalDraft() || {})))
   const [activeTab, setActiveTab] = useState('overview')
   const [selectedSlug, setSelectedSlug] = useState(draft.bikes?.[0]?.slug || '')
   const [password, setPassword] = useState('')
@@ -775,8 +833,14 @@ function PagesPanel({ draft, updateSection }) {
         <div className="mt-6 grid gap-4">
           <JsonArea label="Trust badges JSON" value={draft.trustBadges} onChange={(value) => updateSection(['trustBadges'], value)} />
           <JsonArea label="Service cards JSON" value={draft.services.cards} onChange={(value) => updateSection(['services', 'cards'], value)} />
-          <JsonArea label="Original story images JSON" value={draft.originalStoryImages} onChange={(value) => updateSection(['originalStoryImages'], value)} />
+          <JsonArea label="Action windows JSON" value={draft.actionWindows} onChange={(value) => updateSection(['actionWindows'], value)} rows={12} />
+          <JsonArea label="Appointment page JSON" value={draft.appointment} onChange={(value) => updateSection(['appointment'], value)} />
+          <JsonArea label="Deposit page JSON" value={draft.deposit} onChange={(value) => updateSection(['deposit'], value)} />
           <JsonArea label="Finance rows JSON" value={draft.finance.exampleRows} onChange={(value) => updateSection(['finance', 'exampleRows'], value)} />
+          <JsonArea label="Finance page JSON" value={draft.finance} onChange={(value) => updateSection(['finance'], value)} rows={10} />
+          <JsonArea label="Sell / PX page JSON" value={draft.sell} onChange={(value) => updateSection(['sell'], value)} />
+          <JsonArea label="Lead form subjects JSON" value={draft.leadForms} onChange={(value) => updateSection(['leadForms'], value)} />
+          <JsonArea label="Original story images JSON" value={draft.originalStoryImages} onChange={(value) => updateSection(['originalStoryImages'], value)} />
           <JsonArea label="Legal pages JSON" value={draft.legal} onChange={(value) => updateSection(['legal'], value)} rows={12} />
         </div>
       </section>
