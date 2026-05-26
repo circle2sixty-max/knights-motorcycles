@@ -21,7 +21,7 @@ import {
 } from 'lucide-react'
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import AdminPage from './AdminPage'
-import { fetchCmsContent, loadLocalDraft } from './cmsApi'
+import { fetchCmsContent, loadLocalDraft, submitLead } from './cmsApi'
 import { siteContent as defaultSiteContent } from './data/siteContent'
 
 const iconMap = {
@@ -983,23 +983,52 @@ function LegalPage() {
 
 function LeadForm({ title, type }) {
   const { company, leadForms } = useSiteContent()
-  const [sent, setSent] = useState(false)
+  const [submission, setSubmission] = useState({ status: 'idle', reference: '', error: '', fallbackHref: '' })
   const fields = leadFormConfigs[type] || leadFormConfigs.appointment
+  const subject = leadForms[type] || title
 
-  function handleSubmit(event) {
-    event.preventDefault()
-    const form = new FormData(event.currentTarget)
+  function buildEmailFallback(form) {
     const lines = Array.from(form.entries())
-      .filter(([key]) => key !== 'Consent')
+      .filter(([key, value]) => key !== 'Consent' && key !== 'website' && String(value || '').trim())
       .map(([key, value]) => `${key}: ${value}`)
-    window.location.href = `mailto:${company.email}?subject=${encodeURIComponent(leadForms[type] || title)}&body=${encodeURIComponent(lines.join('\n'))}`
-    setSent(true)
+    return `mailto:${company.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(lines.join('\n'))}`
   }
+
+  async function handleSubmit(event) {
+    event.preventDefault()
+    const formElement = event.currentTarget
+    const form = new FormData(formElement)
+    const payload = {
+      type,
+      subject,
+      customer: {
+        name: form.get('Name'),
+        phone: form.get('Phone'),
+        email: form.get('Email'),
+        preferredContact: form.get('Preferred contact'),
+      },
+      fields: Object.fromEntries(fields.map((field) => [field.name, form.get(field.name)])),
+      message: form.get('Message'),
+      consent: Boolean(form.get('Consent')),
+      sourcePath: window.location.hash.replace('#', '') || window.location.pathname,
+    }
+    const fallbackHref = buildEmailFallback(form)
+    setSubmission({ status: 'sending', reference: '', error: '', fallbackHref })
+    try {
+      const result = await submitLead(payload)
+      setSubmission({ status: 'sent', reference: result.reference || result.lead?.id || '', error: '', fallbackHref })
+      formElement.reset()
+    } catch (error) {
+      setSubmission({ status: 'error', reference: '', error: error.message || 'Unable to submit enquiry.', fallbackHref })
+    }
+  }
+
+  const isSending = submission.status === 'sending'
 
   return (
     <form onSubmit={handleSubmit} className="rounded-[2rem] border border-stone-700 bg-stone-900/70 p-7">
       <h2 className="text-2xl font-black uppercase text-white">{title}</h2>
-      <p className="mt-3 text-sm leading-6 text-stone-400">This window prepares an email enquiry for the dealer. A full CRM/payment/lender integration can be connected later.</p>
+      <p className="mt-3 text-sm leading-6 text-stone-400">This window saves the enquiry into the dealer admin system. Email and phone contact remain available as a fallback.</p>
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <FormInput name="Name" label="Your name" required />
         <FormInput name="Phone" label="Phone" required />
@@ -1017,10 +1046,20 @@ function LeadForm({ title, type }) {
         <input required type="checkbox" name="Consent" className="mt-1" />
         I agree to be contacted by Knights Motorcycles about this enquiry.
       </label>
-      <button className="mt-6 inline-flex items-center gap-3 rounded-full bg-amber-300 px-7 py-4 text-sm font-black uppercase tracking-wider text-stone-950" type="submit">
-        Send enquiry <ArrowRight className="h-4 w-4" />
+      <button disabled={isSending} className="mt-6 inline-flex items-center gap-3 rounded-full bg-amber-300 px-7 py-4 text-sm font-black uppercase tracking-wider text-stone-950 disabled:cursor-not-allowed disabled:opacity-60" type="submit">
+        {isSending ? 'Sending enquiry...' : 'Send enquiry'} <ArrowRight className="h-4 w-4" />
       </button>
-      {sent && <p className="mt-4 text-sm text-emerald-300">Your email client should now open with the enquiry details prepared.</p>}
+      {submission.status === 'sent' && (
+        <p className="mt-4 rounded-2xl border border-emerald-300/25 bg-emerald-300/10 px-4 py-3 text-sm text-emerald-100">
+          Enquiry received. Thank you, Knights will contact you shortly.{submission.reference ? ` Reference: ${submission.reference}.` : ''}
+        </p>
+      )}
+      {submission.status === 'error' && (
+        <p className="mt-4 rounded-2xl border border-red-300/25 bg-red-400/10 px-4 py-3 text-sm text-red-100">
+          We could not save the enquiry: {submission.error}. Use the email fallback below or call the dealership.{' '}
+          <a className="font-bold underline" href={submission.fallbackHref}>Open email fallback</a>
+        </p>
+      )}
     </form>
   )
 }

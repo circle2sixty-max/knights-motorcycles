@@ -8,6 +8,7 @@ import {
   Database,
   FileJson,
   Film,
+  Inbox,
   Image as ImageIcon,
   ImagePlus,
   Lock,
@@ -20,20 +21,57 @@ import {
 } from 'lucide-react'
 import {
   clearLocalDraft,
+  fetchLeads,
   loadLocalDraft,
   loginToCms,
   logoutFromCms,
   saveCmsContent,
   saveLocalDraft,
+  updateLead,
   uploadCmsMedia,
 } from './cmsApi'
 
 const tabs = [
   ['overview', 'Overview', Database],
   ['stock', 'Stock', Bike],
+  ['business', 'Business', Inbox],
   ['company', 'Company', Settings],
   ['pages', 'Page copy', FileJson],
   ['advanced', 'Advanced JSON', FileJson],
+]
+
+const leadGroups = [
+  {
+    title: 'Appointments',
+    types: ['appointment', 'viewing'],
+    description: 'Book-viewing and appointment requests from the public website.',
+  },
+  {
+    title: 'Deposits / reservations',
+    types: ['deposit'],
+    description: 'Reservation and deposit enquiries that need staff follow-up before any payment is taken.',
+  },
+  {
+    title: 'Valuations / PX',
+    types: ['valuation'],
+    description: 'Sell-my-bike, part-exchange, collection and valuation requests.',
+  },
+  {
+    title: 'Finance enquiries',
+    types: ['finance'],
+    description: 'Finance interest records ready for lender/FCA wording before any formal application.',
+  },
+]
+
+const leadStatusOptions = [
+  'new',
+  'contacted',
+  'booked',
+  'reserved',
+  'valuation-sent',
+  'finance-follow-up',
+  'closed',
+  'archived',
 ]
 
 const DEMO_ADMIN_PASSWORD = 'KnightsDemo2026!'
@@ -190,6 +228,8 @@ export default function AdminPage({ content, onContentUpdate }) {
   const [authenticated, setAuthenticated] = useState(false)
   const [localMode, setLocalMode] = useState(false)
   const [stockFilter, setStockFilter] = useState('ALL')
+  const [leads, setLeads] = useState([])
+  const [leadsLoading, setLeadsLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
@@ -221,6 +261,11 @@ export default function AdminPage({ content, onContentUpdate }) {
       await loginToCms(password)
       setAuthenticated(true)
       setLocalMode(false)
+      const leadBody = await fetchLeads().catch((leadError) => {
+        setError(`Logged in, but enquiries could not be loaded: ${leadError.message}`)
+        return { leads: [] }
+      })
+      setLeads(leadBody.leads || [])
       setMessage('Logged in. Changes can now be published to the live CMS data file.')
     } catch (loginError) {
       setError(loginError.message === 'Invalid password' ? 'Password incorrect.' : 'Password incorrect.')
@@ -232,6 +277,7 @@ export default function AdminPage({ content, onContentUpdate }) {
     setAuthenticated(false)
     setLocalMode(false)
     setPassword('')
+    setLeads([])
     setMessage('Logged out.')
   }
 
@@ -256,6 +302,36 @@ export default function AdminPage({ content, onContentUpdate }) {
       setMessage('Published to the CMS data file.')
     } catch (saveError) {
       setError(saveError.message)
+    }
+  }
+
+
+  async function refreshLeads() {
+    if (localMode) {
+      setMessage('Business enquiries are stored on the server. Use the server admin login to view them.')
+      return
+    }
+    setLeadsLoading(true)
+    setError('')
+    try {
+      const body = await fetchLeads()
+      setLeads(body.leads || [])
+      setMessage('Business enquiries refreshed.')
+    } catch (leadError) {
+      setError(leadError.message)
+    } finally {
+      setLeadsLoading(false)
+    }
+  }
+
+  async function handleLeadUpdate(id, patch) {
+    setError('')
+    try {
+      const body = await updateLead(id, patch)
+      setLeads((current) => current.map((lead) => (lead.id === body.lead.id ? body.lead : lead)))
+      setMessage('Business enquiry updated.')
+    } catch (leadError) {
+      setError(leadError.message)
     }
   }
 
@@ -498,6 +574,9 @@ export default function AdminPage({ content, onContentUpdate }) {
             addBike={addBike}
             removeBike={removeBike}
           />
+        )}
+        {activeTab === 'business' && (
+          <BusinessPanel leads={leads} loading={leadsLoading} localMode={localMode} onRefresh={refreshLeads} onUpdate={handleLeadUpdate} />
         )}
         {activeTab === 'company' && <CompanyPanel company={draft.company} updateCompany={updateCompany} />}
         {activeTab === 'pages' && <PagesPanel draft={draft} updateSection={updateSection} />}
@@ -783,6 +862,119 @@ function MediaManager({ bike, updateBikeMedia, onUpload }) {
         </div>
       )}
     </section>
+  )
+}
+
+
+function formatLeadDate(value) {
+  if (!value) return 'Unknown date'
+  try {
+    return new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
+  } catch {
+    return value
+  }
+}
+
+function leadPrimaryField(lead) {
+  const fields = lead.fields || {}
+  return fields['Bike of interest'] || fields['Bike to reserve'] || fields.Registration || fields['Make and model'] || lead.sourcePath || 'General enquiry'
+}
+
+function LeadStat({ value, label }) {
+  return (
+    <div className="rounded-2xl border border-stone-700 bg-stone-950 p-4 text-left">
+      <p className="text-3xl font-black text-amber-200">{value}</p>
+      <p className="mt-1 text-[10px] font-black uppercase tracking-wider text-stone-500">{label}</p>
+    </div>
+  )
+}
+
+function BusinessPanel({ leads, loading, localMode, onRefresh, onUpdate }) {
+  const totalOpen = leads.filter((lead) => lead.status !== 'archived' && lead.status !== 'closed').length
+  return (
+    <div className="grid gap-6">
+      <section className="rounded-[1.5rem] border border-stone-700 bg-stone-900/70 p-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div>
+            <p className="text-xs font-black uppercase tracking-wider text-amber-300">Business inbox</p>
+            <h2 className="mt-2 text-2xl font-black uppercase text-white">Customer enquiries</h2>
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-stone-400">Every public booking, reservation, valuation/PX and finance form now lands here for staff to review, update and archive.</p>
+          </div>
+          <button type="button" onClick={onRefresh} disabled={loading || localMode} className="inline-flex items-center justify-center gap-2 rounded-full bg-amber-300 px-5 py-3 text-xs font-black uppercase tracking-wider text-stone-950 disabled:cursor-not-allowed disabled:opacity-50">
+            {loading ? 'Refreshing...' : 'Refresh leads'}
+          </button>
+        </div>
+        <div className="mt-6 grid gap-3 sm:grid-cols-4">
+          <LeadStat value={leads.length} label="Total leads" />
+          <LeadStat value={totalOpen} label="Open leads" />
+          <LeadStat value={leads.filter((lead) => lead.status === 'new').length} label="New" />
+          <LeadStat value={leads.filter((lead) => lead.status === 'archived').length} label="Archived" />
+        </div>
+        {localMode && (
+          <p className="mt-5 rounded-2xl border border-amber-300/25 bg-amber-300/10 px-4 py-3 text-sm leading-6 text-amber-100">Demo/local mode can edit CMS copy only. Log in with the server admin password to query and process saved customer enquiries.</p>
+        )}
+      </section>
+
+      {leadGroups.map((group) => {
+        const groupLeads = leads.filter((lead) => group.types.includes(lead.type))
+        return (
+          <section key={group.title} className="rounded-[1.5rem] border border-stone-700 bg-stone-900/70 p-6">
+            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h3 className="text-xl font-black uppercase text-white">{group.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-stone-400">{group.description}</p>
+              </div>
+              <span className="rounded-full bg-stone-950 px-4 py-2 text-xs font-black uppercase tracking-wider text-amber-200">{groupLeads.length} lead{groupLeads.length === 1 ? '' : 's'}</span>
+            </div>
+            <div className="mt-5 grid gap-4">
+              {groupLeads.map((lead) => <LeadCard key={lead.id} lead={lead} onUpdate={onUpdate} />)}
+              {!groupLeads.length && <p className="rounded-2xl border border-dashed border-stone-700 p-5 text-sm text-stone-400">No enquiries in this module yet.</p>}
+            </div>
+          </section>
+        )
+      })}
+    </div>
+  )
+}
+
+function LeadCard({ lead, onUpdate }) {
+  const [status, setStatus] = useState(lead.status || 'new')
+  const [adminNotes, setAdminNotes] = useState(lead.adminNotes || '')
+  const fields = Object.entries(lead.fields || {})
+  const customer = lead.customer || {}
+  return (
+    <article className="rounded-2xl border border-stone-700 bg-stone-950 p-5">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-wider text-stone-500">{formatLeadDate(lead.createdAt)} · {lead.id}</p>
+          <h4 className="mt-2 text-lg font-black uppercase text-white">{leadPrimaryField(lead)}</h4>
+          <p className="mt-2 text-sm leading-6 text-stone-300">{customer.name || 'No name'} · {customer.phone || 'No phone'} · {customer.email || 'No email'}</p>
+          <p className="mt-1 text-xs text-stone-500">Preferred contact: {customer.preferredContact || 'Not specified'} · Source: {lead.sourcePath || 'Unknown'}</p>
+        </div>
+        <span className="rounded-full bg-amber-300 px-4 py-2 text-xs font-black uppercase tracking-wider text-stone-950">{lead.status || 'new'}</span>
+      </div>
+
+      {!!fields.length && (
+        <dl className="mt-5 grid gap-3 md:grid-cols-2">
+          {fields.map(([key, value]) => (
+            <div key={key} className="rounded-xl border border-stone-800 bg-stone-900/70 p-3">
+              <dt className="text-[10px] font-black uppercase tracking-wider text-stone-500">{key}</dt>
+              <dd className="mt-1 text-sm text-stone-200">{value || '-'}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+
+      {lead.message && <p className="mt-4 rounded-xl border border-stone-800 bg-stone-900/70 p-3 text-sm leading-6 text-stone-300">{lead.message}</p>}
+
+      <div className="mt-5 grid gap-4 md:grid-cols-[240px_1fr_auto] md:items-end">
+        <SelectField label="Status" value={status} onChange={setStatus} options={leadStatusOptions} />
+        <TextArea label="Admin notes" value={adminNotes} onChange={setAdminNotes} rows={3} />
+        <button type="button" onClick={() => onUpdate(lead.id, { status, adminNotes })} className="inline-flex items-center justify-center rounded-full bg-emerald-400 px-5 py-3 text-xs font-black uppercase tracking-wider text-stone-950">
+          Update
+        </button>
+      </div>
+    </article>
   )
 }
 

@@ -8,12 +8,34 @@ import { fileURLToPath } from 'node:url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const rootDir = path.resolve(__dirname, '..')
 const distDir = path.join(rootDir, 'dist')
+const isProduction = process.env.NODE_ENV === 'production'
+const configuredAdminPassword = (process.env.CMS_ADMIN_PASSWORD || '').trim()
+const hasConfiguredDataDir = Boolean((process.env.CMS_DATA_DIR || '').trim())
+if (isProduction && !configuredAdminPassword) {
+  console.error('CMS_ADMIN_PASSWORD is required in production. Set a strong admin password before starting the CMS server.')
+  process.exit(1)
+}
+if (isProduction && !hasConfiguredDataDir) {
+  console.error('CMS_DATA_DIR is required in production so customer enquiries are stored on a persistent disk or database-backed volume.')
+  process.exit(1)
+}
+
 const dataDir = process.env.CMS_DATA_DIR || path.join(rootDir, '.render-data')
 const contentPath = path.join(dataDir, 'cms-data', 'content.json')
+const leadsPath = path.join(dataDir, 'cms-data', 'leads.json')
 const uploadDir = path.join(dataDir, 'uploads')
 const port = Number(process.env.PORT || 4174)
-const adminPassword = process.env.CMS_ADMIN_PASSWORD || 'KnightsDemo2026!'
+const adminPassword = configuredAdminPassword
 const sessions = new Map()
+const sessionTtlMs = Number(process.env.CMS_SESSION_TTL_MS || 12 * 60 * 60 * 1000)
+const publicLeadRateLimit = Number(process.env.PUBLIC_LEAD_RATE_LIMIT || 20)
+const publicLeadRateWindowMs = Number(process.env.PUBLIC_LEAD_RATE_WINDOW_MS || 15 * 60 * 1000)
+const publicLeadRateBuckets = new Map()
+const writeQueues = new Map()
+let leadStoreQueue = Promise.resolve()
+
+const allowedLeadTypes = new Set(['appointment', 'viewing', 'deposit', 'valuation', 'finance'])
+const allowedLeadStatuses = new Set(['new', 'contacted', 'booked', 'reserved', 'valuation-sent', 'finance-follow-up', 'closed', 'archived'])
 
 const mimeTypes = {
   '.css': 'text/css; charset=utf-8',
@@ -61,7 +83,8 @@ function isHttps(request) {
 
 function setSessionCookie(response, sessionId) {
   const secure = isHttps(response.req) ? '; Secure' : ''
-  response.setHeader('Set-Cookie', `knights_session=${encodeURIComponent(sessionId)}; HttpOnly; Path=/; SameSite=Lax${secure}`)
+  const maxAge = Math.max(1, Math.floor(sessionTtlMs / 1000))
+  response.setHeader('Set-Cookie', `knights_session=${encodeURIComponent(sessionId)}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${maxAge}${secure}`)
 }
 
 function clearSessionCookie(response) {
@@ -70,7 +93,13 @@ function clearSessionCookie(response) {
 
 function isAdmin(request) {
   const sessionId = parseCookies(request).knights_session
-  return Boolean(sessionId && sessions.get(sessionId))
+  const session = sessionId ? sessions.get(sessionId) : null
+  if (!session) return false
+  if (session.expiresAt <= Date.now()) {
+    sessions.delete(sessionId)
+    return false
+  }
+  return true
 }
 
 async function readBody(request, maxBytes = 12 * 1024 * 1024) {
@@ -86,8 +115,8 @@ async function readBody(request, maxBytes = 12 * 1024 * 1024) {
   return Buffer.concat(chunks)
 }
 
-async function readJsonBody(request) {
-  const body = await readBody(request, 3 * 1024 * 1024)
+async function readJsonBody(request, maxBytes = 3 * 1024 * 1024) {
+  const body = await readBody(request, maxBytes)
   return JSON.parse(body.toString('utf8') || '{}')
 }
 
@@ -96,10 +125,160 @@ async function ensureDir(dir) {
 }
 
 async function writeJsonFile(filePath, payload) {
-  await ensureDir(path.dirname(filePath))
-  const tmpPath = `${filePath}.tmp`
-  await fs.writeFile(tmpPath, `${JSON.stringify(payload, null, 2)}\n`)
-  await fs.rename(tmpPath, filePath)
+  const previous = writeQueues.get(filePath) || Promise.resolve()
+  const next = previous.catch(() => {}).then(async () => {
+    await ensureDir(path.dirname(filePath))
+    const tmpPath = `${filePath}.${process.pid}.${Date.now()}.${crypto.randomBytes(4).toString('hex')}.tmp`
+    await fs.writeFile(tmpPath, `${JSON.stringify(payload, null, 2)}\n`)
+    await fs.rename(tmpPath, filePath)
+  })
+  writeQueues.set(filePath, next)
+  try {
+    await next
+  } finally {
+    if (writeQueues.get(filePath) === next) writeQueues.delete(filePath)
+  }
+}
+
+
+function clipString(value, maxLength = 500) {
+  return String(value ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, maxLength)
+}
+
+function publicValidationError(message) {
+  const error = new Error(message)
+  error.publicMessage = message
+  return error
+}
+
+function safePublicLeadError(error) {
+  if (error?.publicMessage) return error.publicMessage
+  return 'Invalid enquiry request'
+}
+
+function getClientAddress(request) {
+  const forwardedFor = request.headers['x-forwarded-for']
+  if (typeof forwardedFor === 'string' && forwardedFor.trim()) return forwardedFor.split(',')[0].trim()
+  return request.socket?.remoteAddress || 'unknown'
+}
+
+function checkPublicLeadRateLimit(request) {
+  if (!Number.isFinite(publicLeadRateLimit) || publicLeadRateLimit <= 0) return true
+  const now = Date.now()
+  const address = getClientAddress(request)
+  const bucket = (publicLeadRateBuckets.get(address) || []).filter((timestamp) => now - timestamp < publicLeadRateWindowMs)
+  if (bucket.length >= publicLeadRateLimit) {
+    publicLeadRateBuckets.set(address, bucket)
+    return false
+  }
+  bucket.push(now)
+  publicLeadRateBuckets.set(address, bucket)
+  return true
+}
+
+function withLeadStore(operation) {
+  const next = leadStoreQueue.catch(() => {}).then(operation)
+  leadStoreQueue = next.catch(() => {})
+  return next
+}
+
+function sanitizeObject(value, maxKeys = 24, maxLength = 700) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {}
+  return Object.fromEntries(
+    Object.entries(value)
+      .slice(0, maxKeys)
+      .map(([key, item]) => [clipString(key, 80), clipString(item, maxLength)])
+      .filter(([key, item]) => key && item),
+  )
+}
+
+async function readLeads() {
+  try {
+    const raw = await fs.readFile(leadsPath, 'utf8')
+    const payload = JSON.parse(raw)
+    if (Array.isArray(payload)) return payload
+    if (Array.isArray(payload.leads)) return payload.leads
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error
+  }
+  return []
+}
+
+async function writeLeads(leads) {
+  await writeJsonFile(leadsPath, { version: 1, updatedAt: new Date().toISOString(), leads })
+}
+
+function sanitizeLeadPayload(payload = {}) {
+  if (clipString(payload.website, 250)) {
+    throw publicValidationError('Invalid enquiry request')
+  }
+  const type = clipString(payload.type, 40) || 'appointment'
+  if (!allowedLeadTypes.has(type)) {
+    throw publicValidationError('Lead type is not supported')
+  }
+  if (payload.consent !== true) {
+    throw publicValidationError('Consent is required before an enquiry can be saved')
+  }
+  const customer = sanitizeObject(payload.customer, 8, 180)
+  if (!customer.name || !customer.phone) {
+    throw publicValidationError('Name and phone are required')
+  }
+  return {
+    type,
+    customer,
+    fields: sanitizeObject(payload.fields, 30, 500),
+    message: clipString(payload.message, 2000),
+    consent: true,
+    sourcePath: clipString(payload.sourcePath, 250),
+    subject: clipString(payload.subject, 180),
+  }
+}
+
+async function createLead(payload) {
+  return withLeadStore(async () => {
+    const now = new Date().toISOString()
+    const lead = {
+      id: `KMC-${now.slice(0, 10).replace(/-/g, '')}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`,
+      ...sanitizeLeadPayload(payload),
+      status: 'new',
+      adminNotes: '',
+      history: [{ at: now, action: 'created', status: 'new', note: 'Public enquiry received' }],
+      createdAt: now,
+      updatedAt: now,
+    }
+    const leads = await readLeads()
+    leads.unshift(lead)
+    await writeLeads(leads)
+    return lead
+  })
+}
+
+async function updateLeadRecord(id, patch = {}) {
+  return withLeadStore(async () => {
+    const leadId = clipString(id, 80)
+    const leads = await readLeads()
+    const index = leads.findIndex((lead) => lead.id === leadId)
+    if (index === -1) throw new Error('Lead not found')
+    const current = leads[index]
+    const nextStatus = clipString(patch.status, 40) || current.status || 'new'
+    if (!allowedLeadStatuses.has(nextStatus)) throw new Error('Lead status is not supported')
+    const nextNotes = typeof patch.adminNotes === 'undefined' ? current.adminNotes || '' : clipString(patch.adminNotes, 3000)
+    const now = new Date().toISOString()
+    const history = Array.isArray(current.history) ? current.history : []
+    const changed = nextStatus !== current.status || nextNotes !== (current.adminNotes || '')
+    const nextLead = {
+      ...current,
+      status: nextStatus,
+      adminNotes: nextNotes,
+      updatedAt: now,
+      history: changed
+        ? [...history, { at: now, action: 'updated', status: nextStatus, note: clipString(patch.historyNote || 'Admin updated enquiry handling', 500) }]
+        : history,
+    }
+    leads[index] = nextLead
+    await writeLeads(leads)
+    return nextLead
+  })
 }
 
 function safeJoin(base, target) {
@@ -177,6 +356,52 @@ async function handleApi(request, response, pathname) {
     }
   }
 
+
+  if (pathname === '/api/leads.php' || pathname === '/api/leads') {
+    if (request.method === 'POST') {
+      if (!checkPublicLeadRateLimit(request)) {
+        sendJson(response, 429, { error: 'Too many enquiry attempts. Please try again later.' })
+        return
+      }
+      try {
+        const lead = await createLead(await readJsonBody(request, 128 * 1024))
+        sendJson(response, 201, { ok: true, reference: lead.id, lead: { id: lead.id, type: lead.type, status: lead.status, createdAt: lead.createdAt } })
+      } catch (error) {
+        sendJson(response, 400, { error: safePublicLeadError(error) })
+      }
+      return
+    }
+
+    if (request.method === 'GET') {
+      if (!isAdmin(request)) {
+        sendJson(response, 401, { error: 'Not authenticated' })
+        return
+      }
+      const leads = await readLeads()
+      sendJson(response, 200, { ok: true, leads })
+      return
+    }
+
+    if (request.method === 'PATCH') {
+      if (!isAdmin(request)) {
+        sendJson(response, 401, { error: 'Not authenticated' })
+        return
+      }
+      try {
+        const url = new URL(request.url || '/', `http://${request.headers.host || 'localhost'}`)
+        const body = await readJsonBody(request, 128 * 1024)
+        const lead = await updateLeadRecord(body.id || url.searchParams.get('id'), body)
+        sendJson(response, 200, { ok: true, lead })
+      } catch (error) {
+        sendJson(response, error.message === 'Lead not found' ? 404 : 400, { error: error.message || 'Unable to update enquiry' })
+      }
+      return
+    }
+
+    sendJson(response, 405, { error: 'Method not allowed' })
+    return
+  }
+
   if (pathname === '/api/login.php' || pathname === '/api/login') {
     if (request.method !== 'POST') {
       sendJson(response, 405, { error: 'Method not allowed' })
@@ -184,12 +409,16 @@ async function handleApi(request, response, pathname) {
     }
     try {
       const payload = await readJsonBody(request)
+      if (!adminPassword) {
+        sendJson(response, 503, { error: 'Admin password is not configured' })
+        return
+      }
       if (payload.password !== adminPassword) {
         sendJson(response, 401, { error: 'Invalid password' })
         return
       }
       const sessionId = crypto.randomBytes(24).toString('hex')
-      sessions.set(sessionId, true)
+      sessions.set(sessionId, { createdAt: Date.now(), expiresAt: Date.now() + sessionTtlMs })
       setSessionCookie(response, sessionId)
       sendJson(response, 200, { ok: true })
     } catch {

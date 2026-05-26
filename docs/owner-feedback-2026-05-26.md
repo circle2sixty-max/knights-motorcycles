@@ -45,9 +45,29 @@ Recorded: 2026-05-26 03:55 BST
    - Until provider is confirmed, finance page should be informational and enquiry-based only.
    - Legal/compliance note: finance wording must be approved; avoid presenting live credit applications or lender promises before FCA/finance partner status is confirmed.
 
+## Backend/admin business requirement
+
+After the public action windows were added, Yuan clarified that the admin system must have matching business-handling modules. The admin area must not only edit CMS copy; it must receive, query and process information submitted from public forms.
+
+Required matching modules:
+
+- Appointment / book-viewing requests.
+- Deposit / reservation enquiries.
+- Sell-my-bike, part-exchange, collection and valuation requests.
+- Finance enquiries.
+
+Implementation direction:
+
+- Public form submission should be saved through the server API.
+- Customer enquiries should be stored separately from CMS page copy.
+- Admin should be able to list, filter/group, view details, update status, add notes and archive/close enquiries.
+- Customer PII must remain behind admin authentication and must not be copied into long-term memory or public reports.
+
+See also: `docs/implementation-2026-05-26-business-leads.md`.
+
 ## Implementation safety notes
 
 - Do not change production domain/Fasthosts files without explicit Yuan confirmation.
 - Render review site can be used for previewing changes.
 - Current admin on Render can log in with temporary review password documented in `cms-and-fasthosts-deployment-2026-05-24.md`; do not use that password for production.
-- Before publishing to Render, run `npm run build` and visually check public routes plus `#/admin`.
+- Before publishing to Render, run tests, lint, build, `git diff --check`, and visually check public routes plus `#/admin`.

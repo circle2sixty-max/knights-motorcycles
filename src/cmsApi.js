@@ -2,6 +2,7 @@ const CONTENT_API = '/api/content.php'
 const LOGIN_API = '/api/login.php'
 const LOGOUT_API = '/api/logout.php'
 const UPLOAD_API = '/api/upload.php'
+const LEADS_API = '/api/leads.php'
 const LOCAL_DRAFT_KEY = 'knights-cms-local-draft'
 
 async function parseJsonResponse(response) {
@@ -79,6 +80,53 @@ export async function saveCmsContent(content) {
   const body = await parseJsonResponse(response)
   if (!response.ok) {
     throw new Error(body?.error || `CMS save failed with ${response.status}`)
+  }
+  return body
+}
+
+
+export async function submitLead(payload) {
+  const response = await fetch(LEADS_API, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+    body: JSON.stringify(payload),
+  })
+  const body = await parseJsonResponse(response)
+  if (!response.ok) {
+    throw new Error(body?.error || `Lead submission failed with ${response.status}`)
+  }
+  return body
+}
+
+export async function fetchLeads() {
+  const response = await fetch(LEADS_API, {
+    headers: { Accept: 'application/json' },
+    credentials: 'include',
+  })
+  const body = await parseJsonResponse(response)
+  if (!response.ok) {
+    throw new Error(body?.error || `Lead list failed with ${response.status}`)
+  }
+  return body
+}
+
+export async function updateLead(id, patch) {
+  const response = await fetch(`${LEADS_API}?id=${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+    body: JSON.stringify({ id, ...patch }),
+  })
+  const body = await parseJsonResponse(response)
+  if (!response.ok) {
+    throw new Error(body?.error || `Lead update failed with ${response.status}`)
   }
   return body
 }
