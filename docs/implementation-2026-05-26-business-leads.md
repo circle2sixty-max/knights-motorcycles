@@ -6,11 +6,19 @@ Recorded: 2026-05-26 12:32 BST
 
 Yuan clarified that the new customer-facing action windows must not stop at page copy or mailto links. Every public business module needs a matching admin-side handling module so the dealership can query and process submitted information.
 
-Required data flow:
+Target production data flow:
 
 ```text
 Public form submission → server API → persistent leads store → admin business inbox → status / notes / archive handling
 ```
+
+## Render demo decision
+
+Yuan clarified on 2026-05-26 13:52 BST that the Render deployment is only a system demo/review site. It is acceptable for Render to demonstrate the UI and business workflow without real front-end/back-end persistence being connected.
+
+Do **not** treat Render API HTML/static fallback as a blocker for the demo unless Yuan specifically asks to enable full backend on Render. The real front-end/back-end integration should be completed after the customer provides the actual website server/hosting environment.
+
+For the production server handover, keep the business-leads implementation available as the integration blueprint: public forms, authenticated admin inbox, persistence, status updates, notes and archive handling.
 
 ## Implemented scope
 

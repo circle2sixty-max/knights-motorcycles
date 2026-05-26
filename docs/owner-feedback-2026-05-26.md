@@ -10,6 +10,14 @@ Recorded: 2026-05-26 03:55 BST
 - Render review admin/CMS: `https://knights-motorcycles.onrender.com/#/admin`
 - Current project path: `/Users/yuantao/Documents/codex/Knightsmotorcycles`
 
+## Render demo / production integration decision
+
+Yuan clarified on 2026-05-26 13:52 BST that the Render deployment is only a system demo/review site. It does **not** need the real front-end/back-end business system to be connected on Render.
+
+Production integration should wait until the customer provides the actual website server/hosting details. At that point, connect the public forms, admin business inbox, persistence and authentication on the real production server.
+
+Implication: if Render `/api/*.php` returns the SPA/static HTML, treat it as a demo limitation rather than a current blocker, as long as public demo pages and UI flows are visible.
+
 ## Owner requested changes
 
 1. Company name
