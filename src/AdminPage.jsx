@@ -14,6 +14,7 @@ import {
   Lock,
   LogOut,
   Plus,
+  RefreshCw,
   Save,
   Settings,
   Trash2,
@@ -21,6 +22,7 @@ import {
 } from 'lucide-react'
 import {
   clearLocalDraft,
+  fetchCmsContent,
   fetchLeads,
   loadLocalDraft,
   loginToCms,
@@ -324,6 +326,26 @@ export default function AdminPage({ content, onContentUpdate }) {
     }
   }
 
+  async function refreshStock() {
+    if (localMode) {
+      setMessage('Stock data is stored on the server. Use the server admin login to refresh.')
+      return
+    }
+    setError('')
+    setMessage('Refreshing stock from CMS...')
+    try {
+      const cmsContent = await fetchCmsContent()
+      if (cmsContent?.bikes?.length) {
+        setDraft({ ...draft, bikes: cmsContent.bikes })
+        setMessage('Stock refreshed from CMS.')
+      } else {
+        setMessage('No stock data returned from CMS.')
+      }
+    } catch (stockError) {
+      setError(stockError.message)
+    }
+  }
+
   async function handleLeadUpdate(id, patch) {
     setError('')
     try {
@@ -573,6 +595,8 @@ export default function AdminPage({ content, onContentUpdate }) {
             onUpload={handleBikeMediaUpload}
             addBike={addBike}
             removeBike={removeBike}
+            stockCounts={stockCounts}
+            onRefresh={refreshStock}
           />
         )}
         {activeTab === 'business' && (
@@ -667,7 +691,7 @@ function AdminStat({ value, label, onClick }) {
   )
 }
 
-function StockPanel({ bikes, selectedBike, selectedSlug, stockFilter, setStockFilter, setSelectedSlug, updateBike, updateBikeNumber, updateBikeMedia, updateBikeSpecs, onUpload, addBike, removeBike }) {
+function StockPanel({ bikes, selectedBike, selectedSlug, stockFilter, setStockFilter, setSelectedSlug, updateBike, updateBikeNumber, updateBikeMedia, updateBikeSpecs, onUpload, addBike, removeBike, stockCounts, onRefresh }) {
   const filteredBikes = stockFilter === 'ALL' ? bikes : bikes.filter((bike) => bike.status === stockFilter)
 
   function handleFilterChange(filter) {
@@ -689,9 +713,21 @@ function StockPanel({ bikes, selectedBike, selectedSlug, stockFilter, setStockFi
   return (
     <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
       <aside className="rounded-[1.5rem] border border-stone-700 bg-stone-900/70 p-4">
-        <button onClick={addBike} className="mb-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-amber-300 px-5 py-3 text-xs font-black uppercase tracking-wider text-stone-950">
-          <Plus className="h-4 w-4" /> Add bike
-        </button>
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <button onClick={addBike} className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-amber-300 px-5 py-3 text-xs font-black uppercase tracking-wider text-stone-950 sm:w-auto">
+            <Plus className="h-4 w-4" /> Add bike
+          </button>
+          <button type="button" onClick={onRefresh} className="inline-flex items-center justify-center gap-2 rounded-full border border-stone-700 bg-stone-950 px-5 py-2 text-xs font-black uppercase tracking-wider text-stone-300 hover:border-amber-300 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto">
+            <RefreshCw className="h-3.5 w-3.5" /> Refresh
+          </button>
+        </div>
+        {stockCounts && (
+          <div className="mb-4 grid gap-3 sm:grid-cols-3">
+            <AdminStat value={stockCounts.total} label="Total bikes" hint="All stock" onClick={() => handleFilterChange('ALL')} />
+            <AdminStat value={stockCounts.available} label="Available" hint="In stock" onClick={() => handleFilterChange('AVAILABLE')} />
+            <AdminStat value={stockCounts.sold} label="Sold" hint="Sold stock" onClick={() => handleFilterChange('SOLD')} />
+          </div>
+        )}
         <div className="mb-4 grid grid-cols-3 gap-2">
           {['ALL', 'AVAILABLE', 'SOLD'].map((filter) => (
             <button
